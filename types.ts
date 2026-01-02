@@ -1,4 +1,3 @@
-
 export interface Quantity {
   value: number;
   unit: string;
@@ -24,6 +23,7 @@ export interface Recipe {
   steps: RecipeStep[];
   totalTimeMinutes: number;
   timestamp: number;
+  sources?: { uri: string; title: string }[];
 }
 
 export interface StandardizedIngredient {

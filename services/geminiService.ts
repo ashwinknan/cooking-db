@@ -1,10 +1,11 @@
 import { GoogleGenAI } from "@google/genai";
 import { Recipe } from "../types";
 
+// Function to parse recipe content using Gemini API
 export const parseRecipeContent = async (
   content: string,
   existingIngredients: string[]
-): Promise<Partial<Recipe>> => {
+): Promise<Partial<Recipe> & { sources?: { uri: string; title: string }[] }> => {
   // Use a new instance to ensure it picks up the latest key from the selection dialog
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
@@ -50,7 +51,24 @@ export const parseRecipeContent = async (
     const text = response.text || "";
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error("Could not parse result. Try pasting the text instead.");
-    return JSON.parse(jsonMatch[0]);
+    
+    const parsedData = JSON.parse(jsonMatch[0]);
+
+    // Fix: Extract grounding URLs from groundingChunks as required by the guidelines for googleSearch
+    const sources: { uri: string; title: string }[] = [];
+    const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
+    if (groundingChunks) {
+      groundingChunks.forEach((chunk: any) => {
+        if (chunk.web?.uri) {
+          sources.push({
+            uri: chunk.web.uri,
+            title: chunk.web.title || chunk.web.uri
+          });
+        }
+      });
+    }
+
+    return { ...parsedData, sources };
   } catch (e: any) {
     console.error("Gemini Error:", e);
     throw new Error(`Systematizer Error: ${e.message || "Failed to read content"}`);
