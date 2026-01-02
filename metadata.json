@@ -1,0 +1,5 @@
+{
+  "name": "Cooking DB Creator",
+  "description": "A sophisticated meal recipe parser that standardizes ingredients, scales servings, and maintains a clean database of your culinary library using Gemini AI.",
+  "requestFramePermissions": []
+}
