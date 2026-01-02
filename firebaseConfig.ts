@@ -1,11 +1,12 @@
 
-import { initializeApp, getApps, FirebaseApp } from "firebase/app";
-import { getFirestore, Firestore } from "firebase/firestore";
+import { initializeApp, getApps } from "firebase/app";
+import type { FirebaseApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
+import type { Firestore } from "firebase/firestore";
 
 /**
- * In a Vite project, environment variables are typically accessed via import.meta.env.
- * However, since we defined them in vite.config.ts via process.env, we continue using that 
- * for compatibility with your existing build setup.
+ * These variables are injected during the build process.
+ * In Vercel, make sure they are added in the Project Settings -> Environment Variables.
  */
 const firebaseConfig = {
   apiKey: process.env.VITE_FIREBASE_API_KEY,
@@ -16,12 +17,11 @@ const firebaseConfig = {
   appId: process.env.VITE_FIREBASE_APP_ID
 };
 
-// Check if we are still using placeholders or missing keys
+// Validates that we have the necessary production keys
 const isConfigured = !!(
   firebaseConfig.projectId && 
-  firebaseConfig.projectId !== "your-project-id" && 
   firebaseConfig.apiKey &&
-  firebaseConfig.apiKey !== "YOUR_FIREBASE_API_KEY"
+  firebaseConfig.projectId !== "undefined"
 );
 
 let app: FirebaseApp | null = null;
@@ -29,15 +29,18 @@ let db: Firestore | null = null;
 
 if (isConfigured) {
   try {
-    // Only initialize if not already initialized
+    // Standard singleton pattern for Firebase initialization
     app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
     db = getFirestore(app);
-    console.info("Cooking Ops DB: Connected to Cloud Production.");
+    
+    if (typeof window !== 'undefined') {
+      console.info("Cooking Ops: Production Database Connected.");
+    }
   } catch (error) {
-    console.error("Firebase initialization error:", error);
+    console.error("Firebase Production Error:", error);
   }
 } else {
-  console.warn("Cooking Ops DB: Environment variables missing. App running in offline mode.");
+  console.warn("Cooking Ops: Database configuration missing. Check Vercel Environment Variables.");
 }
 
 export { db, isConfigured };

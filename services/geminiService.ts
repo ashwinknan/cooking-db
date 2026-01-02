@@ -2,14 +2,14 @@
 import { GoogleGenAI } from "@google/genai";
 import { Recipe } from "../types";
 
-// In production/local, process.env.API_KEY is defined in vite.config.ts
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || "" });
+// Always use process.env.API_KEY directly for initialization as per guidelines
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const parseRecipeContent = async (
   content: string,
   existingIngredients: string[]
 ): Promise<Partial<Recipe>> => {
-  // Using gemini-3-pro-preview for high-quality reasoning and coding-like extraction
+  // Using gemini-3-pro-preview for high-quality extraction and search capabilities
   const model = "gemini-3-pro-preview";
 
   const isUrl = content.trim().startsWith('http');
@@ -20,14 +20,14 @@ export const parseRecipeContent = async (
     INPUT: ${content}
     
     CRITICAL INSTRUCTIONS:
-    1. SCALE TO 4 SERVINGS: All quantities MUST be scaled to exactly 4 servings. If the original doesn't specify, assume it's for 2 and double it.
-    2. LOGICAL DUAL UNITS: Every ingredient must have TWO quantities:
+    1. ${isUrl ? 'Vist the URL provided and extract the recipe details.' : 'Parse the text provided.'}
+    2. SCALE TO 4 SERVINGS: All quantities MUST be scaled to exactly 4 servings. If the original doesn't specify, assume it's for 2 and double it.
+    3. LOGICAL DUAL UNITS: Every ingredient must have TWO quantities:
        - 'kitchen': Culinarilly intuitive units. Use 'cloves' for Garlic, 'inches' for Ginger, 'tbsp/tsp' for spices, 'cups' for grains.
        - 'shopping': Marketplace units (grams/ml/pieces). 
-    3. INSTRUCTION REWRITING: Each step must be self-contained and explicitly mention the ingredient and the quantity used in that step. 
-       - Example: "Add 2 cloves of minced Garlic and 1 inch of grated Ginger to the pan."
-    4. CANONICAL NAMES: Use base names (e.g., "Garlic", "Ginger", "Coconut"). Prevent duplicates. Existing names in DB: ${existingIngredients.join(", ")}. 
-    5. VARIATIONS: List 3-5 common alternative names for this dish.
+    4. INSTRUCTION REWRITING: Each step must be self-contained and explicitly mention the ingredient and the quantity used in that step. 
+    5. CANONICAL NAMES: Use base names (e.g., "Garlic", "Ginger", "Coconut"). Existing names in DB: ${existingIngredients.join(", ")}. 
+    6. VARIATIONS: List 3-5 common alternative names for this dish.
 
     JSON STRUCTURE:
     {
@@ -52,7 +52,9 @@ export const parseRecipeContent = async (
       model,
       contents: prompt,
       config: {
-        responseMimeType: "application/json"
+        responseMimeType: "application/json",
+        // Use googleSearch tool to allow the model to fetch URL content if needed
+        tools: isUrl ? [{ googleSearch: {} }] : undefined
       }
     });
 
