@@ -5,28 +5,39 @@ import { Recipe, Ingredient, RecipeStep, RecipeCategory } from '../types';
 interface RecipeCardProps {
   recipe: Recipe;
   onRemove: (id: string) => void;
-  onUpdate: (updatedRecipe: Recipe) => void;
+  onUpdate: (updatedRecipe: Recipe) => Promise<void>;
 }
 
 export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onRemove, onUpdate }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  // Synchronize local state with prop updates from Firestore
+  const [isSaving, setIsSaving] = useState(false);
+  
+  // Local state for editing - initialized from the incoming recipe prop
   const [editedRecipe, setEditedRecipe] = useState<Recipe>(recipe);
 
+  // CRITICAL: Synchronize local state with prop updates only when NOT editing or saving.
+  // This prevents the "momentary revert" caused by Firestore listeners.
   useEffect(() => {
-    if (!isEditing) {
+    if (!isEditing && !isSaving) {
       setEditedRecipe(recipe);
     }
-  }, [recipe, isEditing]);
+  }, [recipe, isEditing, isSaving]);
 
-  const handleSave = () => {
-    onUpdate(editedRecipe);
-    setIsEditing(false);
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await onUpdate(editedRecipe);
+      setIsEditing(false);
+    } catch (err) {
+      console.error("Save failed:", err);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const updateIngredient = (index: number, field: keyof Ingredient | 'kitchenValue' | 'kitchenUnit' | 'shopValue' | 'shopUnit', value: any) => {
-    const newIngredients = [...editedRecipe.ingredients];
+    const newIngredients = JSON.parse(JSON.stringify(editedRecipe.ingredients));
     if (field === 'name') newIngredients[index].name = value;
     else if (field === 'kitchenValue') newIngredients[index].kitchen.value = Number(value);
     else if (field === 'kitchenUnit') newIngredients[index].kitchen.unit = value;
@@ -37,7 +48,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onRemove, onUpda
   };
 
   const updateStep = (index: number, field: keyof RecipeStep, value: any) => {
-    const newSteps = [...editedRecipe.steps];
+    const newSteps = JSON.parse(JSON.stringify(editedRecipe.steps));
     if (field === 'instruction') newSteps[index].instruction = value;
     else if (field === 'durationMinutes') newSteps[index].durationMinutes = Number(value);
     
@@ -58,6 +69,8 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onRemove, onUpda
   };
 
   const currentCategory = (isEditing ? editedRecipe.category : recipe.category) || 'lunch/dinner';
+  const displayVariations = isEditing ? editedRecipe.variations : recipe.variations;
+  const displayName = isEditing ? editedRecipe.dishName : recipe.dishName;
 
   return (
     <div className={`bg-white rounded-2xl overflow-hidden border ${isExpanded ? 'border-orange-200 shadow-md' : 'border-slate-100 shadow-sm'} transition-all mb-4`}>
@@ -68,16 +81,18 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onRemove, onUpda
       >
         <div className="flex-1">
           <div className="flex items-center gap-3">
-            <h3 className="text-xl font-bold text-slate-800">
+            <div className="flex-1 sm:flex-initial">
               {isEditing ? (
                 <input 
-                  className="bg-slate-50 border-b border-orange-200 outline-none px-1"
+                  className="w-full sm:w-auto bg-slate-50 border-b-2 border-orange-200 outline-none px-2 py-0.5 text-xl font-bold rounded"
                   value={editedRecipe.dishName}
                   onChange={e => setEditedRecipe({...editedRecipe, dishName: e.target.value})}
                   onClick={e => e.stopPropagation()}
                 />
-              ) : recipe.dishName}
-            </h3>
+              ) : (
+                <h3 className="text-xl font-bold text-slate-800">{displayName}</h3>
+              )}
+            </div>
             <span className={`text-[9px] uppercase font-black px-2 py-0.5 rounded-full border ${getCategoryColor(currentCategory)}`}>
               {currentCategory}
             </span>
@@ -99,8 +114,9 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onRemove, onUpda
         <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
           {isExpanded && (
             <button 
+              disabled={isSaving}
               onClick={() => setIsEditing(!isEditing)}
-              className={`p-2 rounded-lg transition-colors ${isEditing ? 'text-green-600 bg-green-50' : 'text-slate-400 hover:text-orange-600 hover:bg-orange-50'}`}
+              className={`p-2 rounded-lg transition-colors ${isEditing ? 'text-green-600 bg-green-50' : 'text-slate-400 hover:text-orange-600 hover:bg-orange-50'} ${isSaving ? 'opacity-50' : ''}`}
             >
               {isEditing ? (
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v13a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
@@ -110,8 +126,9 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onRemove, onUpda
             </button>
           )}
           <button 
+            disabled={isSaving}
             onClick={() => onRemove(recipe.id)}
-            className="p-2 text-slate-300 hover:text-red-500 transition-colors"
+            className="p-2 text-slate-300 hover:text-red-500 transition-colors disabled:opacity-50"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
           </button>
@@ -136,16 +153,17 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onRemove, onUpda
                 />
               ) : (
                 <div className="flex flex-wrap gap-2">
-                  {recipe.variations.map((v, i) => (
+                  {displayVariations.map((v, i) => (
                     <span key={i} className="text-[10px] uppercase tracking-widest font-bold px-2.5 py-1 bg-orange-50 text-orange-600 rounded-md">
                       {v}
                     </span>
                   ))}
+                  {displayVariations.length === 0 && <span className="text-[10px] italic text-slate-400">No variations listed</span>}
                 </div>
               )}
             </div>
             
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 min-w-[140px]">
               <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest sm:text-right">Meal Category</h4>
               {isEditing ? (
                 <select 
@@ -180,11 +198,11 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onRemove, onUpda
                         />
                         <div className="grid grid-cols-2 gap-2">
                           <div className="flex gap-1">
-                            <input className="w-12 text-xs bg-slate-50 p-1 rounded" type="number" value={ing.kitchen.value} onChange={e => updateIngredient(idx, 'kitchenValue', e.target.value)} />
+                            <input className="w-12 text-xs bg-slate-50 p-1 rounded" type="number" step="any" value={ing.kitchen.value} onChange={e => updateIngredient(idx, 'kitchenValue', e.target.value)} />
                             <input className="w-full text-xs bg-slate-50 p-1 rounded" value={ing.kitchen.unit} onChange={e => updateIngredient(idx, 'kitchenUnit', e.target.value)} />
                           </div>
                           <div className="flex gap-1">
-                            <input className="w-12 text-xs bg-slate-50 p-1 rounded" type="number" value={ing.shopping.value} onChange={e => updateIngredient(idx, 'shopValue', e.target.value)} />
+                            <input className="w-12 text-xs bg-slate-50 p-1 rounded" type="number" step="any" value={ing.shopping.value} onChange={e => updateIngredient(idx, 'shopValue', e.target.value)} />
                             <input className="w-full text-xs bg-slate-50 p-1 rounded" value={ing.shopping.unit} onChange={e => updateIngredient(idx, 'shopUnit', e.target.value)} />
                           </div>
                         </div>
@@ -256,11 +274,21 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onRemove, onUpda
               {isEditing && (
                 <div className="mt-8 flex justify-end">
                   <button 
+                    disabled={isSaving}
                     onClick={handleSave}
-                    className="px-6 py-2 bg-orange-600 text-white rounded-xl font-bold shadow-lg shadow-orange-200 hover:bg-orange-700 transition-all flex items-center gap-2"
+                    className="px-6 py-2 bg-orange-600 text-white rounded-xl font-bold shadow-lg shadow-orange-200 hover:bg-orange-700 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v13a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                    Save Changes to DB
+                    {isSaving ? (
+                      <>
+                        <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        Persisting to DB...
+                      </>
+                    ) : (
+                      <>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v13a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                        Save Changes
+                      </>
+                    )}
                   </button>
                 </div>
               )}

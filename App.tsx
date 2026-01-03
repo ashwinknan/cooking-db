@@ -188,13 +188,20 @@ const App: React.FC = () => {
     }
   };
 
-  const updateRecipe = async (updatedRecipe: Recipe) => {
+  const updateRecipe = async (updatedRecipe: Recipe): Promise<void> => {
     if (!db || !user) return;
     try {
       const { id, ...dataToUpdate } = updatedRecipe;
-      await updateDoc(doc(db, "recipes", id), dataToUpdate);
+      // Force a plain object for Firestore and ensure category is included
+      const cleanData = JSON.parse(JSON.stringify({
+        ...dataToUpdate,
+        category: dataToUpdate.category || 'lunch/dinner'
+      }));
+      await updateDoc(doc(db, "recipes", id), cleanData);
     } catch (err) {
+      console.error("Update Error:", err);
       setError("Update failed.");
+      throw err;
     }
   };
 
