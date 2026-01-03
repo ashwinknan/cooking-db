@@ -1,4 +1,5 @@
-import { GoogleGenAI } from "@google/genai";
+
+import { GoogleGenAI, Type } from "@google/genai";
 import { Recipe } from "../types";
 
 // Function to parse recipe content using Gemini API
@@ -24,17 +25,6 @@ export const parseRecipeContent = async (
     4. INSTRUCTION REWRITING: Each step must be self-contained and mention the ingredient + quantity used in that step.
     5. CANONICAL NAMES: Use standard names. Existing DB names: ${existingIngredients.join(", ")}.
     6. VARIATIONS: List 3-5 alternative names for this dish.
-
-    OUTPUT JSON ONLY:
-    {
-      "dishName": "string",
-      "variations": ["string"],
-      "ingredients": [
-        {"name": "string", "kitchen": {"value": number, "unit": "string"}, "shopping": {"value": number, "unit": "string"}}
-      ],
-      "steps": [{"instruction": "string", "durationMinutes": number}],
-      "totalTimeMinutes": number
-    }
   `;
 
   try {
@@ -43,16 +33,62 @@ export const parseRecipeContent = async (
       contents: prompt,
       config: {
         responseMimeType: "application/json",
+        // Implementing responseSchema for reliable structured output
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            dishName: { type: Type.STRING },
+            variations: { type: Type.ARRAY, items: { type: Type.STRING } },
+            ingredients: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  name: { type: Type.STRING },
+                  kitchen: {
+                    type: Type.OBJECT,
+                    properties: {
+                      value: { type: Type.NUMBER },
+                      unit: { type: Type.STRING }
+                    },
+                    required: ["value", "unit"]
+                  },
+                  shopping: {
+                    type: Type.OBJECT,
+                    properties: {
+                      value: { type: Type.NUMBER },
+                      unit: { type: Type.STRING }
+                    },
+                    required: ["value", "unit"]
+                  }
+                },
+                required: ["name", "kitchen", "shopping"]
+              }
+            },
+            steps: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  instruction: { type: Type.STRING },
+                  durationMinutes: { type: Type.NUMBER }
+                },
+                required: ["instruction", "durationMinutes"]
+              }
+            },
+            totalTimeMinutes: { type: Type.NUMBER }
+          },
+          required: ["dishName", "variations", "ingredients", "steps", "totalTimeMinutes"]
+        },
         // googleSearch is essential for reading URLs accurately
         tools: isUrl ? [{ googleSearch: {} }] : undefined
       }
     });
 
+    // Access the .text property directly (not a method)
     const text = response.text || "";
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error("Could not parse result. Try pasting the text instead.");
-    
-    const parsedData = JSON.parse(jsonMatch[0]);
+    // With responseMimeType and responseSchema, the response is directly parseable
+    const parsedData = JSON.parse(text);
 
     // Fix: Extract grounding URLs from groundingChunks as required by the guidelines for googleSearch
     const sources: { uri: string; title: string }[] = [];

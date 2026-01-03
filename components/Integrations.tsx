@@ -6,7 +6,6 @@ interface IntegrationsProps {
 
 export const Integrations: React.FC<IntegrationsProps> = ({ userUid }) => {
   const firebaseConfigSnippet = `
-// PASTE THIS INTO YOUR NEW PROJECT'S firebaseConfig.ts
 const firebaseConfig = {
   apiKey: "${process.env.VITE_FIREBASE_API_KEY}",
   authDomain: "${process.env.VITE_FIREBASE_AUTH_DOMAIN}",
@@ -14,26 +13,46 @@ const firebaseConfig = {
   storageBucket: "${process.env.VITE_FIREBASE_STORAGE_BUCKET}",
   messagingSenderId: "${process.env.VITE_FIREBASE_MESSAGING_SENDER_ID}",
   appId: "${process.env.VITE_FIREBASE_APP_ID}"
-};
-`.trim();
+};`.trim();
 
-  const consumerCodeSnippet = `
-import { collection, query, where, getDocs } from "firebase/firestore";
-import { db } from "./firebaseConfig";
+  const typesSnippet = `
+export interface Recipe {
+  id: string;
+  dishName: string;
+  variations: string[];
+  servings: number;
+  ingredients: Array<{
+    name: string;
+    kitchen: { value: number; unit: string };
+    shopping: { value: number; unit: string };
+  }>;
+  steps: Array<{ instruction: string; durationMinutes: number }>;
+  totalTimeMinutes: number;
+  ownerId: string;
+}`.trim();
 
-// FETCH RECIPES FROM THE CMS
-export const getMyRecipes = async () => {
-  const q = query(
-    collection(db, "recipes"), 
-    where("ownerId", "==", "${userUid}")
-  );
-  
-  const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data()
-  }));
-};
+  const planningPrompt = `
+Act as a world-class senior full-stack engineer. I have a Recipe CMS (Firebase) and I want to build a "Kitchen Planning & Ops" App.
+
+CONNECTION:
+${firebaseConfigSnippet}
+
+DATA SCHEMA:
+${typesSnippet}
+
+CORE FEATURES TO BUILD:
+1. Search/Autocomplete: Fuzzy search across "dishName" and "variations" to select meals.
+2. Search by Ingredient: Filter recipes based on partial ingredient name matches.
+3. Daily Ops Optimizer:
+   - User selects 2-3 dishes.
+   - Input: Number of people cooking, number of stoves available.
+   - AI Task: Interleave the "steps" of all recipes. Group preps together. Show what happens in parallel.
+4. Weekly Meal Planner:
+   - 3-7 day grid (Breakfast, Snack, Lunch/Dinner).
+   - Logic: Lunch/Dinner = 4 servings. Breakfast/Snack = 2 servings.
+   - Inventory Check: Suggest recipes based on "vegetables in fridge" input.
+
+MY UID: ${userUid}
 `.trim();
 
   return (
@@ -41,95 +60,57 @@ export const getMyRecipes = async () => {
       <div className="bg-white rounded-[3rem] p-8 md:p-12 shadow-sm border border-slate-100">
         <header className="mb-12">
           <div className="flex items-center gap-3 mb-4">
-            <div className="bg-blue-100 text-blue-600 p-2 rounded-xl">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            <div className="bg-orange-100 text-orange-600 p-2 rounded-xl">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
             </div>
-            <h2 className="text-3xl font-black text-slate-900 tracking-tight">CMS Integration Profile</h2>
+            <h2 className="text-3xl font-black text-slate-900 tracking-tight">Phase 2: Kitchen Planner</h2>
           </div>
           <p className="text-slate-500 font-medium leading-relaxed max-w-2xl">
-            This application serves as your <strong>Headless CMS</strong>. Use the details below to connect any other frontend (Vercel, Mobile, etc.) to your structured recipe data.
+            This app is your <strong>Source of Truth</strong>. Use the data bridge below to feed your upcoming "Operations Optimizer" app.
           </p>
         </header>
 
-        <section className="space-y-12">
-          {/* STEP 1 */}
-          <div>
-            <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2">
-              <span className="w-5 h-5 bg-slate-900 text-white rounded-full flex items-center justify-center text-[10px]">1</span>
-              Firebase Authorized Domains
-            </h3>
-            <div className="bg-slate-50 border border-slate-200 p-6 rounded-3xl">
-              <p className="text-sm text-slate-600 mb-4">
-                Before your second Vercel app can read this data, you must whitelist its domain in the Firebase Console:
-              </p>
-              <ol className="text-xs space-y-2 text-slate-500 font-bold list-decimal list-inside">
-                <li>Go to <a href="https://console.firebase.google.com/" target="_blank" className="text-blue-600 hover:underline">Firebase Console</a></li>
-                <li>Build > Authentication > Settings > Authorized Domains</li>
-                <li>Add your <strong>new</strong> vercel domain (e.g., <code className="bg-white px-1">my-recipe-reader.vercel.app</code>)</li>
-              </ol>
-            </div>
-          </div>
-
-          {/* STEP 2 */}
-          <div>
-            <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2">
-              <span className="w-5 h-5 bg-slate-900 text-white rounded-full flex items-center justify-center text-[10px]">2</span>
-              Connection Profile
-            </h3>
-            <p className="text-xs text-slate-400 mb-4 italic">Copy these environment variables to your second Vercel project.</p>
-            <div className="relative group">
-              <pre className="bg-slate-900 text-slate-100 p-6 rounded-3xl overflow-x-auto text-xs font-mono shadow-inner border border-slate-800">
-                {firebaseConfigSnippet}
-              </pre>
+        <section className="space-y-10">
+          {/* AI PROMPT BLOCK */}
+          <div className="bg-slate-900 rounded-[2rem] overflow-hidden border border-slate-800 shadow-2xl">
+            <div className="px-6 py-4 bg-slate-800 flex justify-between items-center">
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Planning App Prompt Payload</span>
               <button 
                 onClick={() => {
-                  navigator.clipboard.writeText(firebaseConfigSnippet);
-                  alert("Config copied!");
+                  navigator.clipboard.writeText(planningPrompt);
+                  alert("Planning Prompt copied!");
                 }}
-                className="absolute top-4 right-4 bg-slate-800 hover:bg-slate-700 text-[10px] font-black uppercase text-slate-400 px-3 py-1.5 rounded-lg transition-all"
+                className="text-[10px] font-black uppercase bg-orange-600 text-white px-3 py-1.5 rounded-lg hover:bg-orange-500 transition-all"
               >
-                Copy Config
+                Copy Bridge Data
               </button>
             </div>
+            <pre className="p-6 text-slate-300 text-xs font-mono overflow-x-auto whitespace-pre-wrap leading-relaxed">
+              {planningPrompt}
+            </pre>
           </div>
 
-          {/* STEP 3 */}
-          <div>
-            <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2">
-              <span className="w-5 h-5 bg-slate-900 text-white rounded-full flex items-center justify-center text-[10px]">3</span>
-              Consumer Boilerplate
-            </h3>
-            <p className="text-xs text-slate-400 mb-4 italic">A standard fetcher function to get your private recipes in your next app.</p>
-            <div className="relative group">
-              <pre className="bg-slate-900 text-slate-100 p-6 rounded-3xl overflow-x-auto text-xs font-mono shadow-inner border border-slate-800">
-                {consumerCodeSnippet}
-              </pre>
-              <button 
-                onClick={() => {
-                  navigator.clipboard.writeText(consumerCodeSnippet);
-                  alert("Fetcher snippet copied!");
-                }}
-                className="absolute top-4 right-4 bg-slate-800 hover:bg-slate-700 text-[10px] font-black uppercase text-slate-400 px-3 py-1.5 rounded-lg transition-all"
-              >
-                Copy Snippet
-              </button>
-            </div>
+          <div className="grid md:grid-cols-3 gap-6">
+             <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100">
+                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Testing Tip</h4>
+                <p className="text-[11px] text-slate-600 leading-relaxed font-bold">
+                  Firebase whitelists <code className="bg-white px-1">localhost</code> by default. You can build your new app entirely on your machine before deploying.
+                </p>
+             </div>
+             <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100">
+                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Domain Setup</h4>
+                <p className="text-[11px] text-slate-600 leading-relaxed font-bold">
+                  Once you deploy to Vercel, copy the provided URL into <strong>Firebase Auth > Authorized Domains</strong>.
+                </p>
+             </div>
+             <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100">
+                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Ops Logic</h4>
+                <p className="text-[11px] text-slate-600 leading-relaxed font-bold">
+                  Your "Daily Ops" logic will require sending the full array of selected recipes to Gemini to create the interleaved schedule.
+                </p>
+             </div>
           </div>
         </section>
-
-        <footer className="mt-16 pt-10 border-t border-slate-100">
-          <div className="flex items-center gap-4 p-6 bg-orange-50 rounded-3xl border border-orange-100">
-            <div className="text-orange-600">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>
-            </div>
-            <div>
-              <h4 className="text-sm font-black text-orange-900 uppercase tracking-tight">Access Control Warning</h4>
-              <p className="text-xs text-orange-700 font-medium">
-                Your recipes are protected by <code>ownerId</code>. Your second app MUST authenticate as you (log in with the same Google account) or you must update your Firebase Rules to allow generic read access if you want it to be public.
-              </p>
-            </div>
-          </div>
-        </footer>
       </div>
     </div>
   );
