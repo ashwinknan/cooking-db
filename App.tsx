@@ -4,6 +4,7 @@ import { RecipeInput } from './components/RecipeInput';
 import { RecipeCard } from './components/RecipeCard';
 import { IngredientDatabase } from './components/IngredientDatabase';
 import { About } from './components/About';
+import { Integrations } from './components/Integrations';
 import { parseRecipeContent } from './services/geminiService';
 import { db, auth, isConfigured, loginWithGoogle, logout } from './firebaseConfig';
 import { onAuthStateChanged, User } from 'firebase/auth';
@@ -34,7 +35,7 @@ const App: React.FC = () => {
   const [authLoading, setAuthLoading] = useState(true);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [hasApiKey, setHasApiKey] = useState(false);
-  const [activeTab, setActiveTab] = useState<'database' | 'about'>('database');
+  const [activeTab, setActiveTab] = useState<'database' | 'about' | 'integrations'>('database');
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -286,6 +287,7 @@ const App: React.FC = () => {
           
           <div className="flex items-center gap-8">
             <button onClick={() => setActiveTab('database')} className={`text-sm font-black transition-all ${activeTab === 'database' ? 'text-orange-600 border-b-2 border-orange-600 pb-1' : 'text-slate-400 hover:text-slate-600'}`}>Dashboard</button>
+            <button onClick={() => setActiveTab('integrations')} className={`text-sm font-black transition-all ${activeTab === 'integrations' ? 'text-orange-600 border-b-2 border-orange-600 pb-1' : 'text-slate-400 hover:text-slate-600'}`}>Integrations</button>
             <button onClick={() => setActiveTab('about')} className={`text-sm font-black transition-all ${activeTab === 'about' ? 'text-orange-600 border-b-2 border-orange-600 pb-1' : 'text-slate-400 hover:text-slate-600'}`}>Vision</button>
             <div className="flex items-center gap-4 pl-4 border-l border-slate-100">
               <img src={user.photoURL || ''} className="w-8 h-8 rounded-full ring-2 ring-slate-100" alt="Avatar" />
@@ -296,7 +298,9 @@ const App: React.FC = () => {
       </nav>
 
       <main className="max-w-7xl mx-auto px-4 py-10">
-        {activeTab === 'about' ? <About /> : (
+        {activeTab === 'about' && <About />}
+        {activeTab === 'integrations' && <Integrations userUid={user.uid} />}
+        {activeTab === 'database' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
             <div className="lg:col-span-8">
               <RecipeInput onProcess={handleProcessRecipe} isLoading={loading} />

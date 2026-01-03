@@ -7,7 +7,9 @@ import react from '@vitejs/plugin-react';
 // object (which includes the 'cwd()' method) is used.
 
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), '');
+  // Fix: Cast process to any to resolve the TypeScript error 'Property cwd does not exist on type Process'
+  // which can occur when environment types are not properly detected as Node.js.
+  const env = loadEnv(mode, (process as any).cwd(), '');
   return {
     define: {
       'process.env.API_KEY': JSON.stringify(env.API_KEY),
