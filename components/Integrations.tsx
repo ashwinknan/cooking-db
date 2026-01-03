@@ -17,9 +17,12 @@ const firebaseConfig = {
 };`.trim();
 
   const typesSnippet = `
+export type RecipeCategory = 'breakfast' | 'lunch/dinner' | 'evening snack';
+
 export interface Recipe {
   id: string;
   dishName: string;
+  category: RecipeCategory;
   variations: string[];
   servings: number;
   ingredients: Array<{
@@ -43,12 +46,13 @@ ${typesSnippet}
 
 CORE FEATURES TO BUILD:
 1. Search/Autocomplete: Fuzzy search across "dishName" and "variations" to select meals.
-2. Search by Ingredient: Filter recipes based on partial ingredient name matches.
-3. Daily Ops Optimizer:
+2. Search by Category: Filter recipes by Breakfast, Lunch/Dinner, or Snack.
+3. Search by Ingredient: Filter recipes based on partial ingredient name matches.
+4. Daily Ops Optimizer:
    - User selects 2-3 dishes.
    - Input: Number of people cooking, number of stoves available.
    - AI Task: Interleave the "steps" of all recipes. Group preps together. Show what happens in parallel.
-4. Weekly Meal Planner:
+5. Weekly Meal Planner:
    - 3-7 day grid (Breakfast, Snack, Lunch/Dinner).
    - Logic: Lunch/Dinner = 4 servings. Breakfast/Snack = 2 servings.
    - Inventory Check: Suggest recipes based on "vegetables in fridge" input.

@@ -7,10 +7,7 @@ export const parseRecipeContent = async (
   content: string,
   existingIngredients: string[]
 ): Promise<Partial<Recipe> & { sources?: { uri: string; title: string }[] }> => {
-  // Use a new instance to ensure it picks up the latest key from the selection dialog
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  
-  // Using gemini-3-pro-preview for high-quality extraction and search capabilities
   const model = "gemini-3-pro-preview";
   const isUrl = content.trim().startsWith('http');
 
@@ -20,11 +17,12 @@ export const parseRecipeContent = async (
     
     CRITICAL INSTRUCTIONS:
     1. ${isUrl ? 'Visit this URL and extract ALL recipe details. Be precise with quantities.' : 'Parse the provided text.'}
-    2. SCALE TO 4 SERVINGS: All quantities MUST be scaled to exactly 4 servings. 
-    3. DUAL UNITS: Provide 'kitchen' (cloves, cups, tbsp) and 'shopping' (grams, ml, pieces) units.
-    4. INSTRUCTION REWRITING: Each step must be self-contained and mention the ingredient + quantity used in that step.
-    5. CANONICAL NAMES: Use standard names. Existing DB names: ${existingIngredients.join(", ")}.
-    6. VARIATIONS: List 3-5 alternative names for this dish.
+    2. CATEGORIZATION: Classify the dish as exactly one of: "breakfast", "lunch/dinner", or "evening snack".
+    3. SCALE TO 4 SERVINGS: All quantities MUST be scaled to exactly 4 servings. 
+    4. DUAL UNITS: Provide 'kitchen' (cloves, cups, tbsp) and 'shopping' (grams, ml, pieces) units.
+    5. INSTRUCTION REWRITING: Each step must be self-contained and mention the ingredient + quantity used in that step.
+    6. CANONICAL NAMES: Use standard names. Existing DB names: ${existingIngredients.join(", ")}.
+    7. VARIATIONS: List 3-5 alternative names for this dish.
   `;
 
   try {
@@ -33,11 +31,11 @@ export const parseRecipeContent = async (
       contents: prompt,
       config: {
         responseMimeType: "application/json",
-        // Implementing responseSchema for reliable structured output
         responseSchema: {
           type: Type.OBJECT,
           properties: {
             dishName: { type: Type.STRING },
+            category: { type: Type.STRING, description: "Must be 'breakfast', 'lunch/dinner', or 'evening snack'" },
             variations: { type: Type.ARRAY, items: { type: Type.STRING } },
             ingredients: {
               type: Type.ARRAY,
@@ -78,19 +76,15 @@ export const parseRecipeContent = async (
             },
             totalTimeMinutes: { type: Type.NUMBER }
           },
-          required: ["dishName", "variations", "ingredients", "steps", "totalTimeMinutes"]
+          required: ["dishName", "category", "variations", "ingredients", "steps", "totalTimeMinutes"]
         },
-        // googleSearch is essential for reading URLs accurately
         tools: isUrl ? [{ googleSearch: {} }] : undefined
       }
     });
 
-    // Access the .text property directly (not a method)
     const text = response.text || "";
-    // With responseMimeType and responseSchema, the response is directly parseable
     const parsedData = JSON.parse(text);
 
-    // Fix: Extract grounding URLs from groundingChunks as required by the guidelines for googleSearch
     const sources: { uri: string; title: string }[] = [];
     const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
     if (groundingChunks) {

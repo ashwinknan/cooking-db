@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Recipe, Ingredient, RecipeStep } from '../types';
+import { Recipe, Ingredient, RecipeStep, RecipeCategory } from '../types';
 
 interface RecipeCardProps {
   recipe: Recipe;
@@ -37,6 +37,16 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onRemove, onUpda
     setEditedRecipe({ ...editedRecipe, steps: newSteps });
   };
 
+  const getCategoryColor = (cat: RecipeCategory) => {
+    switch (cat) {
+      case 'breakfast': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+      case 'evening snack': return 'bg-purple-100 text-purple-700 border-purple-200';
+      default: return 'bg-blue-100 text-blue-700 border-blue-200';
+    }
+  };
+
+  const currentCategory = recipe.category || 'lunch/dinner';
+
   return (
     <div className={`bg-white rounded-2xl overflow-hidden border ${isExpanded ? 'border-orange-200 shadow-md' : 'border-slate-100 shadow-sm'} transition-all mb-4`}>
       {/* Header View */}
@@ -47,9 +57,12 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onRemove, onUpda
         <div className="flex-1">
           <div className="flex items-center gap-3">
             <h3 className="text-xl font-bold text-slate-800">{recipe.dishName}</h3>
+            <span className={`text-[9px] uppercase font-black px-2 py-0.5 rounded-full border ${getCategoryColor(currentCategory)}`}>
+              {currentCategory}
+            </span>
             {!isExpanded && (
               <div className="hidden sm:flex flex-wrap gap-1">
-                {recipe.variations.slice(0, 2).map((v, i) => (
+                {recipe.variations.slice(0, 1).map((v, i) => (
                   <span key={i} className="text-[9px] uppercase font-bold px-2 py-0.5 bg-slate-100 text-slate-500 rounded">
                     {v}
                   </span>
@@ -90,12 +103,29 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onRemove, onUpda
       {/* Expanded View */}
       {isExpanded && (
         <div className="p-6 border-t border-slate-50 bg-slate-50/30">
-          <div className="flex flex-wrap gap-2 mb-6">
-            {recipe.variations.map((v, i) => (
-              <span key={i} className="text-[10px] uppercase tracking-widest font-bold px-2.5 py-1 bg-orange-50 text-orange-600 rounded-md">
-                {v}
-              </span>
-            ))}
+          <div className="flex flex-wrap items-center gap-4 mb-8">
+            <div className="flex flex-wrap gap-2">
+              {recipe.variations.map((v, i) => (
+                <span key={i} className="text-[10px] uppercase tracking-widest font-bold px-2.5 py-1 bg-orange-50 text-orange-600 rounded-md">
+                  {v}
+                </span>
+              ))}
+            </div>
+            
+            {isEditing && (
+              <div className="flex items-center gap-2 ml-auto">
+                <label className="text-[10px] font-black uppercase text-slate-400">Category:</label>
+                <select 
+                  value={editedRecipe.category || 'lunch/dinner'}
+                  onChange={e => setEditedRecipe({...editedRecipe, category: e.target.value as RecipeCategory})}
+                  className="text-xs font-bold bg-white border border-slate-200 rounded-lg px-2 py-1 outline-none focus:ring-2 focus:ring-orange-500"
+                >
+                  <option value="breakfast">Breakfast</option>
+                  <option value="lunch/dinner">Lunch/Dinner</option>
+                  <option value="evening snack">Evening Snack</option>
+                </select>
+              </div>
+            )}
           </div>
 
           <div className="grid lg:grid-cols-12 gap-8">

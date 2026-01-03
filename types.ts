@@ -1,4 +1,6 @@
 
+export type RecipeCategory = 'breakfast' | 'lunch/dinner' | 'evening snack';
+
 export interface Quantity {
   value: number;
   unit: string;
@@ -18,6 +20,7 @@ export interface RecipeStep {
 export interface Recipe {
   id: string;
   dishName: string;
+  category: RecipeCategory;
   variations: string[];
   servings: number;
   ingredients: Ingredient[];

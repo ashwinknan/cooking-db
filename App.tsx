@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
-import { Recipe, StandardizedIngredient } from './types';
+import { Recipe, StandardizedIngredient, RecipeCategory } from './types';
 import { RecipeInput } from './components/RecipeInput';
 import { RecipeCard } from './components/RecipeCard';
 import { IngredientDatabase } from './components/IngredientDatabase';
@@ -99,7 +100,13 @@ const App: React.FC = () => {
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const recipesArray: Recipe[] = [];
       querySnapshot.forEach((doc) => {
-        recipesArray.push({ ...doc.data(), id: doc.id } as Recipe);
+        const data = doc.data();
+        // Provide a default category for existing records that don't have one
+        recipesArray.push({ 
+          ...data, 
+          id: doc.id,
+          category: data.category || 'lunch/dinner' 
+        } as Recipe);
       });
       setRecipes(recipesArray);
       setDbStatus('online');
@@ -141,6 +148,7 @@ const App: React.FC = () => {
       const result = await parseRecipeContent(content, existingNames);
       const newRecipeData = {
         dishName: result.dishName || 'Unknown Dish',
+        category: result.category || 'lunch/dinner',
         variations: result.variations || [],
         servings: 4,
         ingredients: result.ingredients || [],
@@ -263,7 +271,10 @@ const App: React.FC = () => {
         <div className="bg-blue-600 text-white px-4 py-3 text-sm font-bold flex flex-col sm:flex-row items-center justify-center gap-4 shadow-xl border-b border-blue-700">
           <div className="flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v10"/><path d="m16 8-4 4-4-4"/><path d="M22 12A10 10 0 1 1 2 12a10 10 0 0 1 20 0Z"/></svg>
-            <span>AI Studio API Key required for Reading URLs</span>
+            <span>
+              AI Studio API Key required for Reading URLs. 
+              <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noopener noreferrer" className="underline ml-2 hover:text-blue-100">Billing Info</a>
+            </span>
           </div>
           <button 
             onClick={handleOpenApiKey} 
