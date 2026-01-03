@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Recipe, Ingredient, RecipeStep, RecipeCategory } from '../types';
 
 interface RecipeCardProps {
@@ -11,7 +11,14 @@ interface RecipeCardProps {
 export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onRemove, onUpdate }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  // Synchronize local state with prop updates from Firestore
   const [editedRecipe, setEditedRecipe] = useState<Recipe>(recipe);
+
+  useEffect(() => {
+    if (!isEditing) {
+      setEditedRecipe(recipe);
+    }
+  }, [recipe, isEditing]);
 
   const handleSave = () => {
     onUpdate(editedRecipe);
@@ -37,6 +44,11 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onRemove, onUpda
     setEditedRecipe({ ...editedRecipe, steps: newSteps });
   };
 
+  const updateVariations = (val: string) => {
+    const variations = val.split(',').map(v => v.trim()).filter(v => v !== "");
+    setEditedRecipe({ ...editedRecipe, variations });
+  };
+
   const getCategoryColor = (cat: RecipeCategory) => {
     switch (cat) {
       case 'breakfast': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
@@ -45,7 +57,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onRemove, onUpda
     }
   };
 
-  const currentCategory = recipe.category || 'lunch/dinner';
+  const currentCategory = (isEditing ? editedRecipe.category : recipe.category) || 'lunch/dinner';
 
   return (
     <div className={`bg-white rounded-2xl overflow-hidden border ${isExpanded ? 'border-orange-200 shadow-md' : 'border-slate-100 shadow-sm'} transition-all mb-4`}>
@@ -56,7 +68,16 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onRemove, onUpda
       >
         <div className="flex-1">
           <div className="flex items-center gap-3">
-            <h3 className="text-xl font-bold text-slate-800">{recipe.dishName}</h3>
+            <h3 className="text-xl font-bold text-slate-800">
+              {isEditing ? (
+                <input 
+                  className="bg-slate-50 border-b border-orange-200 outline-none px-1"
+                  value={editedRecipe.dishName}
+                  onChange={e => setEditedRecipe({...editedRecipe, dishName: e.target.value})}
+                  onClick={e => e.stopPropagation()}
+                />
+              ) : recipe.dishName}
+            </h3>
             <span className={`text-[9px] uppercase font-black px-2 py-0.5 rounded-full border ${getCategoryColor(currentCategory)}`}>
               {currentCategory}
             </span>
@@ -103,29 +124,45 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onRemove, onUpda
       {/* Expanded View */}
       {isExpanded && (
         <div className="p-6 border-t border-slate-50 bg-slate-50/30">
-          <div className="flex flex-wrap items-center gap-4 mb-8">
-            <div className="flex flex-wrap gap-2">
-              {recipe.variations.map((v, i) => (
-                <span key={i} className="text-[10px] uppercase tracking-widest font-bold px-2.5 py-1 bg-orange-50 text-orange-600 rounded-md">
-                  {v}
-                </span>
-              ))}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+            <div className="flex-1">
+              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Variations / Also Known As</h4>
+              {isEditing ? (
+                <input 
+                  className="w-full text-xs font-bold bg-white border border-slate-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-orange-500"
+                  value={editedRecipe.variations.join(', ')}
+                  placeholder="Separate variations with commas..."
+                  onChange={e => updateVariations(e.target.value)}
+                />
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {recipe.variations.map((v, i) => (
+                    <span key={i} className="text-[10px] uppercase tracking-widest font-bold px-2.5 py-1 bg-orange-50 text-orange-600 rounded-md">
+                      {v}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
             
-            {isEditing && (
-              <div className="flex items-center gap-2 ml-auto">
-                <label className="text-[10px] font-black uppercase text-slate-400">Category:</label>
+            <div className="flex flex-col gap-2">
+              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest sm:text-right">Meal Category</h4>
+              {isEditing ? (
                 <select 
                   value={editedRecipe.category || 'lunch/dinner'}
                   onChange={e => setEditedRecipe({...editedRecipe, category: e.target.value as RecipeCategory})}
-                  className="text-xs font-bold bg-white border border-slate-200 rounded-lg px-2 py-1 outline-none focus:ring-2 focus:ring-orange-500"
+                  className="text-xs font-bold bg-white border border-slate-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-orange-500"
                 >
                   <option value="breakfast">Breakfast</option>
                   <option value="lunch/dinner">Lunch/Dinner</option>
                   <option value="evening snack">Evening Snack</option>
                 </select>
-              </div>
-            )}
+              ) : (
+                <span className={`text-[10px] font-black uppercase text-center px-4 py-1.5 rounded-xl border ${getCategoryColor(currentCategory)}`}>
+                  {currentCategory}
+                </span>
+              )}
+            </div>
           </div>
 
           <div className="grid lg:grid-cols-12 gap-8">
