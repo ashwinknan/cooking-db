@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 interface IntegrationsProps {
@@ -7,12 +8,12 @@ interface IntegrationsProps {
 export const Integrations: React.FC<IntegrationsProps> = ({ userUid }) => {
   const firebaseConfigSnippet = `
 const firebaseConfig = {
-  apiKey: "${process.env.VITE_FIREBASE_API_KEY}",
-  authDomain: "${process.env.VITE_FIREBASE_AUTH_DOMAIN}",
-  projectId: "${process.env.VITE_FIREBASE_PROJECT_ID}",
-  storageBucket: "${process.env.VITE_FIREBASE_STORAGE_BUCKET}",
-  messagingSenderId: "${process.env.VITE_FIREBASE_MESSAGING_SENDER_ID}",
-  appId: "${process.env.VITE_FIREBASE_APP_ID}"
+  apiKey: "${process.env.VITE_FIREBASE_API_KEY || ''}",
+  authDomain: "${process.env.VITE_FIREBASE_AUTH_DOMAIN || ''}",
+  projectId: "${process.env.VITE_FIREBASE_PROJECT_ID || ''}",
+  storageBucket: "${process.env.VITE_FIREBASE_STORAGE_BUCKET || ''}",
+  messagingSenderId: "${process.env.VITE_FIREBASE_MESSAGING_SENDER_ID || ''}",
+  appId: "${process.env.VITE_FIREBASE_APP_ID || ''}"
 };`.trim();
 
   const typesSnippet = `
@@ -60,55 +61,40 @@ MY UID: ${userUid}
       <div className="bg-white rounded-[3rem] p-8 md:p-12 shadow-sm border border-slate-100">
         <header className="mb-12">
           <div className="flex items-center gap-3 mb-4">
-            <div className="bg-orange-100 text-orange-600 p-2 rounded-xl">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+            <div className="bg-slate-900 text-white p-2 rounded-xl">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg>
             </div>
-            <h2 className="text-3xl font-black text-slate-900 tracking-tight">Phase 2: Kitchen Planner</h2>
+            <h2 className="text-3xl font-black text-slate-900 tracking-tight">Developer Bridge</h2>
           </div>
           <p className="text-slate-500 font-medium leading-relaxed max-w-2xl">
-            This app is your <strong>Source of Truth</strong>. Use the data bridge below to feed your upcoming "Operations Optimizer" app.
+            This tab is for your <strong>future self</strong>. When you start building your separate Planning App, copy this data to connect to your existing database.
           </p>
         </header>
 
         <section className="space-y-10">
-          {/* AI PROMPT BLOCK */}
           <div className="bg-slate-900 rounded-[2rem] overflow-hidden border border-slate-800 shadow-2xl">
             <div className="px-6 py-4 bg-slate-800 flex justify-between items-center">
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Planning App Prompt Payload</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Bridge Payload (Phase 2)</span>
               <button 
                 onClick={() => {
                   navigator.clipboard.writeText(planningPrompt);
-                  alert("Planning Prompt copied!");
+                  alert("Bridge Prompt copied to clipboard!");
                 }}
                 className="text-[10px] font-black uppercase bg-orange-600 text-white px-3 py-1.5 rounded-lg hover:bg-orange-500 transition-all"
               >
-                Copy Bridge Data
+                Copy for Next App
               </button>
             </div>
-            <pre className="p-6 text-slate-300 text-xs font-mono overflow-x-auto whitespace-pre-wrap leading-relaxed">
+            <pre className="p-6 text-slate-300 text-xs font-mono overflow-x-auto whitespace-pre-wrap leading-relaxed max-h-[400px]">
               {planningPrompt}
             </pre>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
-             <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100">
-                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Testing Tip</h4>
-                <p className="text-[11px] text-slate-600 leading-relaxed font-bold">
-                  Firebase whitelists <code className="bg-white px-1">localhost</code> by default. You can build your new app entirely on your machine before deploying.
-                </p>
-             </div>
-             <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100">
-                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Domain Setup</h4>
-                <p className="text-[11px] text-slate-600 leading-relaxed font-bold">
-                  Once you deploy to Vercel, copy the provided URL into <strong>Firebase Auth > Authorized Domains</strong>.
-                </p>
-             </div>
-             <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100">
-                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Ops Logic</h4>
-                <p className="text-[11px] text-slate-600 leading-relaxed font-bold">
-                  Your "Daily Ops" logic will require sending the full array of selected recipes to Gemini to create the interleaved schedule.
-                </p>
-             </div>
+          <div className="bg-blue-50 p-8 rounded-[2rem] border border-blue-100">
+            <h4 className="text-blue-900 font-bold mb-2">Why is this here?</h4>
+            <p className="text-blue-700 text-sm leading-relaxed">
+              Since you intend to build the <strong>Kitchen Planner</strong> as a separate application, this screen provides the bridge. It exports your current database configuration and schema so the next AI agent can build the operations optimizer with zero friction.
+            </p>
           </div>
         </section>
       </div>

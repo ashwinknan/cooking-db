@@ -1,3 +1,4 @@
+
 export interface Quantity {
   value: number;
   unit: string;
@@ -18,7 +19,7 @@ export interface Recipe {
   id: string;
   dishName: string;
   variations: string[];
-  servings: 4;
+  servings: number;
   ingredients: Ingredient[];
   steps: RecipeStep[];
   totalTimeMinutes: number;
