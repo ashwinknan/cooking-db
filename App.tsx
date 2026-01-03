@@ -14,10 +14,10 @@ import {
   onSnapshot, 
   addDoc, 
   updateDoc, 
-  deleteDoc, 
   doc, 
   query, 
-  orderBy 
+  orderBy,
+  deleteDoc
 } from 'firebase/firestore';
 
 // Fix: Declare aistudio for TypeScript
@@ -101,7 +101,6 @@ const App: React.FC = () => {
       const recipesArray: Recipe[] = [];
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        // Provide a default category for existing records that don't have one
         recipesArray.push({ 
           ...data, 
           id: doc.id,
@@ -192,15 +191,20 @@ const App: React.FC = () => {
     if (!db || !user) return;
     try {
       const { id, ...dataToUpdate } = updatedRecipe;
-      // Force a plain object for Firestore and ensure category is included
-      const cleanData = JSON.parse(JSON.stringify({
-        ...dataToUpdate,
-        category: dataToUpdate.category || 'lunch/dinner'
-      }));
-      await updateDoc(doc(db, "recipes", id), cleanData);
-    } catch (err) {
-      console.error("Update Error:", err);
-      setError("Update failed.");
+      const docRef = doc(db, "recipes", id);
+      
+      // Explicitly clean the object and ensure the category is present
+      const payload = {
+        ...JSON.parse(JSON.stringify(dataToUpdate)),
+        category: dataToUpdate.category || 'lunch/dinner',
+        timestamp: Date.now() // Update timestamp to trigger child refresh
+      };
+
+      await updateDoc(docRef, payload);
+      console.log("Firestore update successful for:", id);
+    } catch (err: any) {
+      console.error("Firestore update failed:", err);
+      setError("Failed to save changes: " + err.message);
       throw err;
     }
   };
@@ -272,8 +276,6 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 pb-20">
-      
-      {/* 🤖 API KEY SETUP BANNER */}
       {!hasApiKey && (
         <div className="bg-blue-600 text-white px-4 py-3 text-sm font-bold flex flex-col sm:flex-row items-center justify-center gap-4 shadow-xl border-b border-blue-700">
           <div className="flex items-center gap-2">
@@ -372,7 +374,6 @@ const App: React.FC = () => {
             <div className="lg:col-span-4">
               <div className="sticky top-28">
                 <IngredientDatabase ingredients={masterIngredientsList} />
-                
                 <div className="mt-8 bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm">
                   <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Live Diagnostics</h4>
                   <ul className="space-y-5">
@@ -393,22 +394,6 @@ const App: React.FC = () => {
                       </span>
                     </li>
                   </ul>
-
-                  {recipes.some(r => r.sources?.length) && (
-                    <div className="mt-8 pt-6 border-t border-slate-100">
-                      <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Verification Sources</h4>
-                      <div className="space-y-2">
-                        {Array.from(new Set(recipes.flatMap(r => r.sources || []).map(s => s.uri))).map((uri) => {
-                          const source = recipes.flatMap(r => r.sources || []).find(s => s.uri === uri);
-                          return (
-                            <a key={uri} href={uri} target="_blank" rel="noopener noreferrer" className="block text-[10px] text-blue-600 hover:underline truncate italic">
-                              {source?.title || uri}
-                            </a>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>

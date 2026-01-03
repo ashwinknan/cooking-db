@@ -13,51 +13,53 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onRemove, onUpda
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   
-  // Local state for editing - initialized from the incoming recipe prop
-  const [editedRecipe, setEditedRecipe] = useState<Recipe>(recipe);
+  // Local state for editing - separate from props
+  const [draft, setDraft] = useState<Recipe>(recipe);
 
-  // CRITICAL: Synchronize local state with prop updates only when NOT editing or saving.
-  // This prevents the "momentary revert" caused by Firestore listeners.
+  // Sync draft with props ONLY when we aren't editing/saving AND a newer timestamp arrives
   useEffect(() => {
     if (!isEditing && !isSaving) {
-      setEditedRecipe(recipe);
+      setDraft(recipe);
     }
-  }, [recipe, isEditing, isSaving]);
+  }, [recipe.id, recipe.timestamp, isEditing, isSaving]);
 
   const handleSave = async () => {
+    if (isSaving) return;
     setIsSaving(true);
     try {
-      await onUpdate(editedRecipe);
+      // Create a clean copy of draft to send to parent
+      const cleanRecipe = JSON.parse(JSON.stringify(draft));
+      await onUpdate(cleanRecipe);
       setIsEditing(false);
     } catch (err) {
-      console.error("Save failed:", err);
+      console.error("Save component level error:", err);
     } finally {
       setIsSaving(false);
     }
   };
 
   const updateIngredient = (index: number, field: keyof Ingredient | 'kitchenValue' | 'kitchenUnit' | 'shopValue' | 'shopUnit', value: any) => {
-    const newIngredients = JSON.parse(JSON.stringify(editedRecipe.ingredients));
+    const newIngredients = JSON.parse(JSON.stringify(draft.ingredients));
     if (field === 'name') newIngredients[index].name = value;
     else if (field === 'kitchenValue') newIngredients[index].kitchen.value = Number(value);
     else if (field === 'kitchenUnit') newIngredients[index].kitchen.unit = value;
     else if (field === 'shopValue') newIngredients[index].shopping.value = Number(value);
     else if (field === 'shopUnit') newIngredients[index].shopping.unit = value;
     
-    setEditedRecipe({ ...editedRecipe, ingredients: newIngredients });
+    setDraft({ ...draft, ingredients: newIngredients });
   };
 
   const updateStep = (index: number, field: keyof RecipeStep, value: any) => {
-    const newSteps = JSON.parse(JSON.stringify(editedRecipe.steps));
+    const newSteps = JSON.parse(JSON.stringify(draft.steps));
     if (field === 'instruction') newSteps[index].instruction = value;
     else if (field === 'durationMinutes') newSteps[index].durationMinutes = Number(value);
     
-    setEditedRecipe({ ...editedRecipe, steps: newSteps });
+    setDraft({ ...draft, steps: newSteps });
   };
 
   const updateVariations = (val: string) => {
     const variations = val.split(',').map(v => v.trim()).filter(v => v !== "");
-    setEditedRecipe({ ...editedRecipe, variations });
+    setDraft({ ...draft, variations });
   };
 
   const getCategoryColor = (cat: RecipeCategory) => {
@@ -68,9 +70,10 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onRemove, onUpda
     }
   };
 
-  const currentCategory = (isEditing ? editedRecipe.category : recipe.category) || 'lunch/dinner';
-  const displayVariations = isEditing ? editedRecipe.variations : recipe.variations;
-  const displayName = isEditing ? editedRecipe.dishName : recipe.dishName;
+  // When editing, ALWAYS show draft. Otherwise, show prop-derived data.
+  const currentCategory = (isEditing || isSaving ? draft.category : recipe.category) || 'lunch/dinner';
+  const displayVariations = (isEditing || isSaving ? draft.variations : recipe.variations) || [];
+  const displayName = (isEditing || isSaving ? draft.dishName : recipe.dishName);
 
   return (
     <div className={`bg-white rounded-2xl overflow-hidden border ${isExpanded ? 'border-orange-200 shadow-md' : 'border-slate-100 shadow-sm'} transition-all mb-4`}>
@@ -85,8 +88,8 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onRemove, onUpda
               {isEditing ? (
                 <input 
                   className="w-full sm:w-auto bg-slate-50 border-b-2 border-orange-200 outline-none px-2 py-0.5 text-xl font-bold rounded"
-                  value={editedRecipe.dishName}
-                  onChange={e => setEditedRecipe({...editedRecipe, dishName: e.target.value})}
+                  value={draft.dishName}
+                  onChange={e => setDraft({...draft, dishName: e.target.value})}
                   onClick={e => e.stopPropagation()}
                 />
               ) : (
@@ -98,7 +101,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onRemove, onUpda
             </span>
             {!isExpanded && (
               <div className="hidden sm:flex flex-wrap gap-1">
-                {recipe.variations.slice(0, 1).map((v, i) => (
+                {displayVariations.slice(0, 1).map((v, i) => (
                   <span key={i} className="text-[9px] uppercase font-bold px-2 py-0.5 bg-slate-100 text-slate-500 rounded">
                     {v}
                   </span>
@@ -115,7 +118,10 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onRemove, onUpda
           {isExpanded && (
             <button 
               disabled={isSaving}
-              onClick={() => setIsEditing(!isEditing)}
+              onClick={() => {
+                if (!isEditing) setDraft(recipe); // Reset draft to current props when starting to edit
+                setIsEditing(!isEditing);
+              }}
               className={`p-2 rounded-lg transition-colors ${isEditing ? 'text-green-600 bg-green-50' : 'text-slate-400 hover:text-orange-600 hover:bg-orange-50'} ${isSaving ? 'opacity-50' : ''}`}
             >
               {isEditing ? (
@@ -147,7 +153,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onRemove, onUpda
               {isEditing ? (
                 <input 
                   className="w-full text-xs font-bold bg-white border border-slate-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-orange-500"
-                  value={editedRecipe.variations.join(', ')}
+                  value={draft.variations.join(', ')}
                   placeholder="Separate variations with commas..."
                   onChange={e => updateVariations(e.target.value)}
                 />
@@ -167,8 +173,8 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onRemove, onUpda
               <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest sm:text-right">Meal Category</h4>
               {isEditing ? (
                 <select 
-                  value={editedRecipe.category || 'lunch/dinner'}
-                  onChange={e => setEditedRecipe({...editedRecipe, category: e.target.value as RecipeCategory})}
+                  value={draft.category || 'lunch/dinner'}
+                  onChange={e => setDraft({...draft, category: e.target.value as RecipeCategory})}
                   className="text-xs font-bold bg-white border border-slate-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-orange-500"
                 >
                   <option value="breakfast">Breakfast</option>
@@ -187,7 +193,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onRemove, onUpda
             <div className="lg:col-span-5">
               <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Ingredients Editor</h4>
               <div className="space-y-3">
-                {editedRecipe.ingredients.map((ing, idx) => (
+                {draft.ingredients.map((ing, idx) => (
                   <div key={idx} className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
                     {isEditing ? (
                       <div className="space-y-2">
@@ -230,7 +236,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onRemove, onUpda
             <div className="lg:col-span-7">
               <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Steps Workflow</h4>
               <div className="space-y-4">
-                {editedRecipe.steps.map((step, idx) => (
+                {draft.steps.map((step, idx) => (
                   <div key={idx} className="group relative bg-white p-4 rounded-xl border border-slate-100 shadow-sm hover:border-orange-200 transition-all">
                     <div className="flex justify-between items-start gap-4">
                       <div className="flex gap-3 w-full">
@@ -281,7 +287,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onRemove, onUpda
                     {isSaving ? (
                       <>
                         <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                        Persisting to DB...
+                        Persisting...
                       </>
                     ) : (
                       <>
