@@ -21,8 +21,7 @@ import {
   writeBatch,
   arrayUnion,
   arrayRemove,
-  setDoc,
-  getDoc
+  setDoc
 } from 'firebase/firestore';
 
 const App: React.FC = () => {
@@ -32,14 +31,15 @@ const App: React.FC = () => {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [categories, setCategories] = useState<string[]>(['Breakfast', 'Lunch/Dinner', 'Evening Snack']);
   const [loading, setLoading] = useState(false);
+  
+  // Mobile UI States
+  const [showPantryMobile, setShowPantryMobile] = useState(false);
 
-  // Auth State
   useEffect(() => {
     if (!auth) { setAuthLoading(false); return; }
     return onAuthStateChanged(auth, (u) => { setUser(u); setAuthLoading(false); });
   }, []);
 
-  // Sync Recipes and Categories
   useEffect(() => {
     if (!db || !user) return;
     
@@ -91,7 +91,6 @@ const App: React.FC = () => {
   const deleteRecipe = async (id: string) => {
     if (confirm("Delete this recipe?")) {
       const batch = writeBatch(db!);
-      // Clean up pairings elsewhere
       recipes.forEach(r => {
         if (r.pairedWith?.includes(id)) {
           batch.update(doc(db!, "recipes", r.id), { pairedWith: arrayRemove(id) });
@@ -153,7 +152,7 @@ const App: React.FC = () => {
       <div className="bg-white p-12 rounded-[2.5rem] text-center shadow-2xl w-full max-w-md">
         <h1 className="text-4xl font-black mb-2 tracking-tighter">Cooking <span className="text-orange-500">Ops</span></h1>
         <p className="text-slate-400 mb-8 font-bold text-[10px] uppercase tracking-[0.2em]">Kitchen OS Production</p>
-        <button onClick={loginWithGoogle} className="w-full py-4 px-8 bg-slate-900 text-white rounded-2xl font-black hover:bg-black transition-all active:scale-95 flex items-center justify-center gap-3">
+        <button onClick={loginWithGoogle} className="w-full py-4 px-8 bg-slate-900 text-white rounded-2xl font-black flex items-center justify-center gap-3">
           Login with Google
         </button>
       </div>
@@ -161,10 +160,9 @@ const App: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Mobile-Native Responsive Nav */}
-      <nav className="sticky top-0 z-[200] bg-slate-900 text-white shadow-2xl">
-        <div className="max-w-7xl mx-auto px-4 h-16 md:h-20 flex items-center justify-between">
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+      <nav className="sticky top-0 z-[200] bg-slate-900 text-white shadow-xl h-16 md:h-20 shrink-0">
+        <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 md:w-10 md:h-10 bg-orange-500 rounded-xl flex items-center justify-center">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>
@@ -172,7 +170,7 @@ const App: React.FC = () => {
             <h1 className="text-lg font-black tracking-tighter">Ops</h1>
           </div>
           
-          <div className="flex gap-1 md:gap-4 overflow-x-auto no-scrollbar">
+          <div className="flex gap-1 md:gap-4 overflow-x-auto no-scrollbar py-2">
             {['cms', 'ops', 'planning', 'inventory'].map((tab) => (
               <button 
                 key={tab}
@@ -186,41 +184,91 @@ const App: React.FC = () => {
         </div>
       </nav>
 
-      <main className="max-w-7xl mx-auto px-4 py-6 md:py-10">
+      <main className="max-w-7xl mx-auto px-4 py-6 md:py-10 flex-1 w-full">
         {activeTab === 'cms' && (
-          <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6 md:gap-10">
-            <div className="lg:col-span-8 order-2 lg:order-1">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div className="lg:col-span-8 flex flex-col gap-6">
+              {/* URL Input on Top */}
               <RecipeInput onProcess={handleProcess} isLoading={loading} />
+              
+              {/* Recipe List */}
               <div className="space-y-4 md:space-y-8">
-                {recipes.map(r => (
-                   <RecipeCard 
-                     key={r.id} 
-                     recipe={r} 
-                     onRemove={deleteRecipe} 
-                     onUpdate={updateRecipe} 
-                     allRecipes={recipes}
-                     categories={categories}
-                     onTogglePairing={handleTogglePairing}
-                   />
-                ))}
+                {recipes.length > 0 ? (
+                  recipes.map(r => (
+                    <RecipeCard 
+                      key={r.id} 
+                      recipe={r} 
+                      onRemove={deleteRecipe} 
+                      onUpdate={updateRecipe} 
+                      allRecipes={recipes}
+                      categories={categories}
+                      onTogglePairing={handleTogglePairing}
+                    />
+                  ))
+                ) : (
+                  <div className="text-center py-20 bg-white rounded-[2.5rem] border border-dashed border-slate-200">
+                    <p className="text-slate-400 text-sm font-bold uppercase tracking-widest">Your library is empty</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Mobile Only: Collapsible Tools */}
+              <div className="lg:hidden mt-4 space-y-4">
+                 <button 
+                   onClick={() => setShowPantryMobile(!showPantryMobile)}
+                   className="w-full bg-slate-900 text-white p-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex items-center justify-between"
+                 >
+                    <span>Pantry & Categories Core</span>
+                    <svg className={`transition-transform ${showPantryMobile ? 'rotate-180' : ''}`} xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                 </button>
+                 
+                 {showPantryMobile && (
+                   <div className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-300">
+                     <IngredientDatabase 
+                        ingredients={masterIngredientsList} 
+                        onMerge={handleMergeIngredients}
+                        onRename={handleRenameIngredient}
+                      />
+                      <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
+                        <h3 className="text-xs font-black uppercase text-slate-400 mb-4 tracking-widest">Categories Manager</h3>
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          {categories.map(c => <span key={c} className="bg-slate-50 border border-slate-100 px-3 py-1.5 rounded-xl text-[10px] font-bold text-slate-600">{c}</span>)}
+                        </div>
+                        <div className="flex gap-2">
+                          <input 
+                            placeholder="New Category..." 
+                            className="flex-1 bg-slate-50 border-none p-3 rounded-xl text-xs font-bold outline-none ring-1 ring-slate-100 focus:ring-orange-500"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                handleAddCategory(e.currentTarget.value);
+                                e.currentTarget.value = '';
+                              }
+                            }}
+                          />
+                        </div>
+                      </div>
+                   </div>
+                 )}
               </div>
             </div>
-            <div className="lg:col-span-4 order-1 lg:order-2">
-              <div className="lg:sticky lg:top-28">
+
+            {/* Desktop Only: Sidebar Core */}
+            <div className="hidden lg:block lg:col-span-4">
+              <div className="sticky top-28 space-y-6">
                 <IngredientDatabase 
                   ingredients={masterIngredientsList} 
                   onMerge={handleMergeIngredients}
                   onRename={handleRenameIngredient}
                 />
-                <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm mt-6">
+                <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
                   <h3 className="text-xs font-black uppercase text-slate-400 mb-4 tracking-widest">Categories Manager</h3>
                   <div className="flex flex-wrap gap-2 mb-4">
                     {categories.map(c => <span key={c} className="bg-slate-50 border border-slate-100 px-3 py-1.5 rounded-xl text-[10px] font-bold text-slate-600">{c}</span>)}
                   </div>
                   <div className="flex gap-2">
                     <input 
-                      id="newCatInput"
-                      placeholder="New Category..." 
+                      id="desktopNewCatInput"
+                      placeholder="Add Category..." 
                       className="flex-1 bg-slate-50 border-none p-2.5 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-orange-500"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
@@ -229,16 +277,6 @@ const App: React.FC = () => {
                         }
                       }}
                     />
-                    <button 
-                      onClick={() => {
-                        const input = document.getElementById('newCatInput') as HTMLInputElement;
-                        handleAddCategory(input.value);
-                        input.value = '';
-                      }}
-                      className="bg-slate-900 text-white px-4 py-2 rounded-xl text-[10px] font-black"
-                    >
-                      ADD
-                    </button>
                   </div>
                 </div>
               </div>
@@ -250,7 +288,7 @@ const App: React.FC = () => {
         {activeTab === 'inventory' && (
           <div className="max-w-xl mx-auto text-center py-20 bg-white rounded-[2.5rem] border-2 border-dashed border-slate-200">
             <h2 className="text-2xl font-black mb-2">Inventory System</h2>
-            <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">Phase 3 Integration</p>
+            <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">Coming Soon in Phase 3</p>
           </div>
         )}
       </main>

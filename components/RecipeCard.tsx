@@ -145,10 +145,13 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
       {isExpanded && (
         <div className="p-5 md:p-8 border-t border-slate-50 bg-slate-50/20">
           
-          {/* PAIRS WITH - Moved to top as requested */}
-          <div className="mb-8">
+          {/* PAIRS WITH - Sticky to top of card content */}
+          <div className="mb-8 p-4 bg-white/50 rounded-2xl border border-slate-100 shadow-sm">
              <div className="flex items-center justify-between mb-4">
-                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pairs With</h4>
+                <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-orange-500"><path d="M11 15h2m-2-3h2m-2-3h2m-2-3h2M9 3.91V2h6v1.91a2 2 0 0 0 .81 1.59l2.19 1.5a2 2 0 0 1 .81 1.63V17a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8.63a2 2 0 0 1 .81-1.63l2.19-1.5A2 2 0 0 0 7 3.91Z"/></svg>
+                  Pairing OS
+                </h4>
                 {!isEditing && (recipe.pairedWith?.length || 0) > 3 && (
                   <button onClick={() => setShowAllPairs(!showAllPairs)} className="text-[10px] font-black text-orange-600 uppercase">
                     {showAllPairs ? 'Show Less' : `+${recipe.pairedWith!.length - 3} More`}
@@ -163,7 +166,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
                      <div key={pid} className="bg-orange-50 text-orange-700 px-3 py-1.5 rounded-xl text-[10px] font-black flex items-center gap-2 border border-orange-100 shadow-sm">
                        {found.dishName}
                        {isEditing && (
-                         <button onClick={() => onTogglePairing(recipe.id, pid)} className="text-orange-300 hover:text-orange-600 p-0.5">
+                         <button onClick={() => onTogglePairing(recipe.id, pid)} className="text-orange-300 hover:text-orange-600 p-0.5 transition-colors">
                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                          </button>
                        )}
@@ -171,7 +174,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
                    ) : null;
                 })}
                 {(!draft.pairedWith || draft.pairedWith.length === 0) && !isEditing && (
-                  <span className="text-[10px] font-bold text-slate-300 italic">No pairings defined</span>
+                  <span className="text-[10px] font-bold text-slate-300 italic">No pairings established yet</span>
                 )}
              </div>
 
@@ -220,14 +223,13 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
                   onClick={handleSave} 
                   className="flex-1 md:flex-none px-6 py-2 bg-slate-900 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all"
                 >
-                  {isSaving ? "Syncing..." : "Commit"}
+                  {isSaving ? "Syncing..." : "Commit Changes"}
                 </button>
               </div>
             )}
           </div>
 
           <div className="space-y-10">
-            {/* Metadata Section */}
             {isEditing && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                  <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
