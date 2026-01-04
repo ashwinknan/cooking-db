@@ -212,7 +212,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
                     <p className="text-xl font-bold text-slate-800 leading-snug mb-14 text-center min-h-[120px] flex items-center justify-center">{recipe.steps[currentStepIndex-1].instruction}</p>
                     <button 
                       onClick={() => toggleStepComplete(currentStepIndex-1)}
-                      className={`w-full py-5 rounded-[2rem] font-black text-sm uppercase tracking-[0.2em] transition-all shadow-xl active:scale-95 flex items-center justify-center gap-3 ${completedSteps.has(currentStepIndex-1) ? 'bg-green-500 text-white' : 'bg-slate-900 text-white hover:bg-black'}`}
+                      className={`w-full py-5 rounded-[2rem] font-black text-sm uppercase tracking-[0.2em] transition-all shadow-xl active:scale-95 flex items-center justify-center gap-3 ${completedSteps.has(currentStepIndex-1) ? 'bg-green-600 text-white' : 'bg-slate-900 text-white hover:bg-black'}`}
                     >
                       {completedSteps.has(currentStepIndex-1) ? (
                         <>
