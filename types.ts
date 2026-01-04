@@ -1,5 +1,5 @@
 
-export type RecipeCategory = 'breakfast' | 'lunch/dinner' | 'evening snack';
+export type RecipeCategory = string; // Now dynamic
 export type StepType = 'pre-start' | 'prep' | 'cooking';
 
 export interface Quantity {
@@ -16,7 +16,7 @@ export interface Ingredient {
 export interface RecipeStep {
   instruction: string;
   durationMinutes: number;
-  type: StepType; // pre-start, prep, cooking
+  type: StepType;
 }
 
 export interface Recipe {
@@ -24,8 +24,8 @@ export interface Recipe {
   dishName: string;
   category: RecipeCategory;
   variations: string[];
-  servings: number; // Always 2 by default
-  servingSizeInfo: string; // e.g., "1 serving = 350g"
+  servings: number;
+  servingSizeInfo: string;
   ingredients: Ingredient[];
   steps: RecipeStep[];
   totalTimeMinutes: number;
@@ -40,8 +40,8 @@ export interface StandardizedIngredient {
 }
 
 export interface TimelineStep {
-  timeOffset: number; // Elapsed from start
-  duration: number;   // Duration of this specific step
+  timeOffset: number;
+  duration: number;
   action: string;
   involvedRecipes: string[];
   assignees: string[];
@@ -63,5 +63,5 @@ export interface ProductionSchedule {
 export interface MealPlanResult {
   plan: MealPlanDay[];
   insufficientVariety: boolean;
-  missingCount: Record<RecipeCategory, number>;
+  missingCount: Record<string, number>;
 }
