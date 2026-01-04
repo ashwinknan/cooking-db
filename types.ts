@@ -34,3 +34,28 @@ export interface StandardizedIngredient {
   name: string;
   recipesUsing: string[];
 }
+
+// --- Production System Types ---
+
+export interface TimelineStep {
+  timeOffset: number;
+  action: string;
+  involvedRecipes: string[];
+  assignees: string[];
+  isParallel: boolean;
+}
+
+export interface MealPlanDay {
+  day: number;
+  breakfast: string;
+  lunchDinner: string;
+  snack: string;
+}
+
+export interface ProductionSchedule {
+  timeline: TimelineStep[];
+}
+
+export interface MealPlanResult {
+  plan: MealPlanDay[];
+}
