@@ -143,7 +143,6 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
           </div>
           
           <div className="flex items-center gap-1 md:gap-2" onClick={e => e.stopPropagation()}>
-            {/* Mobile Cooking Mode Button */}
             {!isEditing && (
               <button 
                 onClick={openCookingMode}
@@ -174,7 +173,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
           <div className="p-5 md:p-8 border-t border-slate-50 bg-slate-50/20">
             <div className="mb-8 p-4 bg-white/50 rounded-2xl border border-slate-100 shadow-sm">
                <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                  <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest flex items-center gap-2 italic">
                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-orange-500"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg>
                     Perfect Matches
                   </h4>
@@ -200,7 +199,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
                      ) : null;
                   })}
                   {(!draft.pairedWith || draft.pairedWith.length === 0) && !isEditing && (
-                    <span className="text-[10px] font-bold text-slate-300 italic">No pairings defined yet</span>
+                    <span className="text-[10px] font-bold text-slate-300 italic">No pairings established yet</span>
                   )}
                </div>
 
@@ -235,11 +234,11 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
             </div>
 
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-              <h4 className="text-[11px] font-black uppercase text-slate-900 tracking-[0.2em]">Details & Steps</h4>
+              <h4 className="text-[11px] font-black uppercase text-slate-900 tracking-[0.2em]">Details & Sequence</h4>
               {isEditing && (
                 <div className="flex w-full md:w-auto gap-2">
                   <button onClick={() => setIsEditing(false)} className="flex-1 md:flex-none px-6 py-2 bg-slate-100 text-slate-500 rounded-xl font-black text-[10px] uppercase tracking-widest">Discard</button>
-                  <button onClick={handleSave} className="flex-1 md:flex-none px-6 py-2 bg-slate-900 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg flex items-center justify-center gap-2">Save Changes</button>
+                  <button onClick={handleSave} className="flex-1 md:flex-none px-6 py-2 bg-slate-900 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg flex items-center justify-center gap-2">Save Buddy</button>
                 </div>
               )}
             </div>
@@ -248,7 +247,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
               {isEditing && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                    <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
-                      <label className="text-[10px] font-black text-slate-400 uppercase mb-3 block tracking-widest">Type</label>
+                      <label className="text-[10px] font-black text-slate-400 uppercase mb-3 block tracking-widest">Recipe Type</label>
                       <select 
                         value={draft.category} 
                         onChange={e => setDraft({...draft, category: e.target.value})}
@@ -274,7 +273,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
                             <button onClick={() => removeItem('variation', i)} className="text-slate-400 hover:text-red-500">×</button>
                           </div>
                         ))}
-                        <button onClick={() => addItem('variation')} className="text-[10px] bg-slate-900 text-white px-4 py-1.5 rounded-xl font-black">Add</button>
+                        <button onClick={() => addItem('variation')} className="text-[10px] bg-slate-900 text-white px-4 py-1.5 rounded-xl font-black">Add More</button>
                       </div>
                    </div>
                 </div>
@@ -283,8 +282,8 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
               <div className="grid lg:grid-cols-12 gap-8 md:gap-12">
                 <div className="lg:col-span-5">
                   <div className="flex items-center justify-between mb-5">
-                     <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest italic">Ingredients</h4>
-                     {isEditing && <button onClick={() => addItem('ingredient')} className="text-[10px] font-black text-orange-600 bg-orange-50 px-3 py-1 rounded-lg">New</button>}
+                     <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest italic">The Pantry</h4>
+                     {isEditing && <button onClick={() => addItem('ingredient')} className="text-[10px] font-black text-orange-600 bg-orange-50 px-3 py-1 rounded-lg">Add Ingredient</button>}
                   </div>
                   <div className="space-y-2">
                     {(isEditing ? draft.ingredients : recipe.ingredients).map((ing, idx) => (
@@ -293,14 +292,20 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
                           <div className="space-y-3">
                              <input value={ing.name} onChange={e => updateIngredient(idx, 'name', e.target.value)} className="font-bold text-xs bg-slate-50 px-3 py-2 rounded-xl w-full outline-none" />
                              <div className="flex gap-2">
-                                <input type="number" value={ing.kitchen.value} onChange={e => updateIngredient(idx, 'kitchenValue', e.target.value)} className="bg-slate-50 text-[9px] font-black p-2 rounded-lg w-full" placeholder="Qty" />
-                                <input value={ing.kitchen.unit} onChange={e => updateIngredient(idx, 'kitchenUnit', e.target.value)} className="bg-slate-50 text-[9px] font-black p-2 rounded-lg w-full" placeholder="Unit" />
+                                <div className="flex-1">
+                                  <label className="text-[8px] font-black text-slate-400 uppercase">Qty</label>
+                                  <input type="number" value={ing.kitchen.value} onChange={e => updateIngredient(idx, 'kitchenValue', e.target.value)} className="bg-slate-50 text-[9px] font-black p-2 rounded-lg w-full" />
+                                </div>
+                                <div className="flex-1">
+                                  <label className="text-[8px] font-black text-slate-400 uppercase">Unit</label>
+                                  <input value={ing.kitchen.unit} onChange={e => updateIngredient(idx, 'kitchenUnit', e.target.value)} className="bg-slate-50 text-[9px] font-black p-2 rounded-lg w-full" />
+                                </div>
                              </div>
                           </div>
                         ) : (
                           <div className="flex items-center justify-between">
                             <span className="text-xs font-bold text-slate-800">{ing.name}</span>
-                            <span className="text-[10px] text-orange-600 font-black">{ing.kitchen.value} {ing.kitchen.unit}</span>
+                            <span className="text-[10px] text-orange-600 font-black tracking-tight">{ing.kitchen.value} {ing.kitchen.unit}</span>
                           </div>
                         )}
                       </div>
@@ -310,19 +315,57 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
 
                 <div className="lg:col-span-7">
                   <div className="flex items-center justify-between mb-5">
-                     <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest italic">Cooking Steps</h4>
-                     {isEditing && <button onClick={() => addItem('step')} className="text-[10px] font-black text-orange-600 bg-orange-50 px-3 py-1 rounded-lg">New Step</button>}
+                     <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest italic">How To Make It</h4>
+                     {isEditing && <button onClick={() => addItem('step')} className="text-[10px] font-black text-orange-600 bg-orange-50 px-3 py-1 rounded-lg">Add Step</button>}
                   </div>
                   <div className="space-y-4">
                     {(isEditing ? draft.steps : recipe.steps).map((step, idx) => (
-                      <div key={idx} className="bg-white p-4 md:p-6 rounded-[1.5rem] md:rounded-[2rem] border border-slate-100 flex items-start gap-4">
-                        <div className="shrink-0 w-8 h-8 md:w-10 md:h-10 bg-slate-900 text-white text-[11px] md:text-xs font-black flex items-center justify-center rounded-2xl">{idx + 1}</div>
-                        <div className="flex-1 min-w-0">
-                          {isEditing ? (
-                            <textarea value={step.instruction} onChange={e => updateStep(idx, 'instruction', e.target.value)} className="w-full bg-slate-50 p-3 rounded-2xl text-xs font-semibold outline-none ring-1 ring-slate-200 focus:ring-orange-500 resize-none min-h-[80px]" />
-                          ) : (
-                            <p className="text-xs md:text-sm text-slate-700 font-semibold leading-relaxed">{step.instruction}</p>
-                          )}
+                      <div key={idx} className="bg-white p-4 md:p-6 rounded-[1.5rem] md:rounded-[2rem] border border-slate-100 flex flex-col gap-4">
+                        <div className="flex items-start gap-4">
+                          <div className="shrink-0 w-8 h-8 md:w-10 md:h-10 bg-slate-900 text-white text-[11px] md:text-xs font-black flex items-center justify-center rounded-2xl shadow-lg">{idx + 1}</div>
+                          <div className="flex-1 min-w-0">
+                            {isEditing ? (
+                              <div className="space-y-4">
+                                <textarea value={step.instruction} onChange={e => updateStep(idx, 'instruction', e.target.value)} className="w-full bg-slate-50 p-3 rounded-2xl text-xs font-semibold outline-none ring-1 ring-slate-200 focus:ring-orange-500 resize-none min-h-[80px]" />
+                                <div className="flex flex-wrap gap-4 items-center">
+                                  <div className="flex-1 min-w-[120px]">
+                                    <label className="text-[8px] font-black text-slate-400 uppercase block mb-1">Step Type</label>
+                                    <select 
+                                      value={step.type} 
+                                      onChange={e => updateStep(idx, 'type', e.target.value)}
+                                      className="w-full text-[10px] font-black bg-slate-50 px-3 py-2 rounded-xl outline-none ring-1 ring-slate-100"
+                                    >
+                                       <option value="prep">Prep Only</option>
+                                       <option value="cooking">Cooking/Heat</option>
+                                       <option value="pre-start">Advanced Prep (Previous Day)</option>
+                                    </select>
+                                  </div>
+                                  <div className="flex-1 min-w-[80px]">
+                                    <label className="text-[8px] font-black text-slate-400 uppercase block mb-1">Time (Mins)</label>
+                                    <input 
+                                      type="number" 
+                                      value={step.durationMinutes} 
+                                      onChange={e => updateStep(idx, 'durationMinutes', e.target.value)}
+                                      className="w-full text-[10px] font-black bg-slate-50 px-3 py-2 rounded-xl outline-none ring-1 ring-slate-100"
+                                    />
+                                  </div>
+                                  <button onClick={() => removeItem('step', idx)} className="text-red-500 font-black text-[10px] uppercase pt-4 hover:underline">Delete Step</button>
+                                </div>
+                              </div>
+                            ) : (
+                              <>
+                                <p className="text-xs md:text-sm text-slate-700 font-semibold leading-relaxed mb-3">{step.instruction}</p>
+                                <div className="flex items-center gap-2">
+                                   <span className={`text-[8px] md:text-[9px] font-black uppercase px-2 py-0.5 rounded-lg border ${step.type === 'cooking' ? 'bg-orange-50 text-orange-600 border-orange-100' : step.type === 'pre-start' ? 'bg-blue-50 text-blue-600 border-blue-100' : 'bg-slate-50 text-slate-400 border-slate-100'}`}>
+                                     {step.type === 'pre-start' ? 'Prerequisite' : step.type}
+                                   </span>
+                                   <span className="text-[9px] font-black text-slate-400 tracking-tight">
+                                     {step.durationMinutes} min activity
+                                   </span>
+                                </div>
+                              </>
+                            )}
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -354,8 +397,8 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
               {currentStepIndex === 0 ? (
                 /* OVERVIEW PAGE */
                 <div className="space-y-8 animate-in slide-in-from-right-4">
-                   <div className="bg-slate-800/50 p-6 rounded-[2rem] border border-slate-700">
-                      <h4 className="text-orange-400 text-[10px] font-black uppercase tracking-[0.2em] mb-4">You'll need</h4>
+                   <div className="bg-slate-800/50 p-6 rounded-[2rem] border border-slate-700 shadow-xl">
+                      <h4 className="text-orange-400 text-[10px] font-black uppercase tracking-[0.2em] mb-4">Required Ingredients</h4>
                       <div className="space-y-3">
                         {recipe.ingredients.map((ing, i) => (
                           <div key={i} className="flex justify-between items-center text-sm font-bold text-slate-100 border-b border-slate-700/50 pb-2 last:border-0">
@@ -368,7 +411,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
 
                    {recipe.pairedWith && recipe.pairedWith.length > 0 && (
                      <div className="bg-slate-800/50 p-6 rounded-[2rem] border border-slate-700">
-                        <h4 className="text-blue-400 text-[10px] font-black uppercase tracking-[0.2em] mb-4">Goes Great With</h4>
+                        <h4 className="text-blue-400 text-[10px] font-black uppercase tracking-[0.2em] mb-4">Perfect Sides</h4>
                         <div className="flex flex-wrap gap-2">
                           {recipe.pairedWith.map(pid => {
                             const found = allRecipes.find(r => r.id === pid);
@@ -382,9 +425,19 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
                 /* STEP PAGE */
                 <div className="h-full flex flex-col justify-center items-center text-center animate-in slide-in-from-right-4">
                   <div className="bg-white rounded-[3rem] p-10 shadow-2xl w-full">
-                     <span className="w-16 h-16 bg-slate-900 text-white rounded-3xl flex items-center justify-center text-2xl font-black mb-8 mx-auto shadow-xl">
-                       {currentStepIndex}
-                     </span>
+                     <div className="flex flex-col items-center gap-4 mb-8">
+                        <span className="w-16 h-16 bg-slate-900 text-white rounded-3xl flex items-center justify-center text-2xl font-black shadow-xl">
+                          {currentStepIndex}
+                        </span>
+                        <div className="flex items-center gap-2">
+                           <span className={`text-[9px] font-black uppercase px-2 py-1 rounded-lg border ${recipe.steps[currentStepIndex-1].type === 'cooking' ? 'bg-orange-100 text-orange-600 border-orange-200' : 'bg-slate-100 text-slate-500 border-slate-200'}`}>
+                              {recipe.steps[currentStepIndex-1].type}
+                           </span>
+                           <span className="text-[10px] font-black text-slate-400">
+                             {recipe.steps[currentStepIndex-1].durationMinutes} mins
+                           </span>
+                        </div>
+                     </div>
                      <p className="text-xl font-bold text-slate-800 leading-relaxed">
                        {recipe.steps[currentStepIndex - 1].instruction}
                      </p>
@@ -400,7 +453,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
                 onClick={() => setShowIngredientsOverlay(false)}
               >
                  <div className="flex items-center justify-between mb-8">
-                    <h3 className="text-white text-xl font-black">Quick Check</h3>
+                    <h3 className="text-white text-xl font-black">Check Qty</h3>
                     <button className="text-slate-400 p-2">✕</button>
                  </div>
                  <div className="overflow-y-auto space-y-4">
@@ -411,15 +464,16 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
                       </div>
                     ))}
                  </div>
-                 <p className="text-slate-500 text-[10px] font-black uppercase text-center mt-auto tracking-[0.3em]">Tap anywhere to return</p>
+                 <p className="text-slate-500 text-[10px] font-black uppercase text-center mt-auto tracking-[0.3em] py-4">Tap to return to steps</p>
               </div>
             )}
           </div>
 
-          <footer className="p-6 flex gap-4 bg-slate-800 shrink-0">
+          <footer className="p-6 flex gap-4 bg-slate-800 shrink-0 border-t border-slate-700/50">
              <button 
                onClick={() => setShowIngredientsOverlay(true)}
-               className="w-14 h-14 bg-slate-700 text-slate-300 rounded-2xl flex items-center justify-center shadow-lg active:scale-95"
+               className="w-14 h-14 bg-slate-700 text-slate-300 rounded-2xl flex items-center justify-center shadow-lg active:scale-95 transition-all"
+               title="Quick Quantity Check"
              >
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg>
              </button>
@@ -443,7 +497,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
                }}
                className="flex-[2] bg-orange-600 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all"
              >
-                {currentStepIndex === 0 ? 'Start Cooking' : currentStepIndex === recipe.steps.length ? 'Finish' : 'Next Step'}
+                {currentStepIndex === 0 ? 'Start Cooking' : currentStepIndex === recipe.steps.length ? 'I\'m Done' : 'Next Step'}
              </button>
           </footer>
         </div>
