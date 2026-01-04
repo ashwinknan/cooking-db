@@ -47,10 +47,24 @@ const App: React.FC = () => {
 
   const masterIngredientsList = useMemo(() => {
     const dbIng: Record<string, StandardizedIngredient> = {};
+    
+    // Helper to canonicalize names (e.g. remove parenthetical descriptors)
+    const getCanonical = (name: string) => {
+      // Very simple normalization: lowercase, remove (split ...), remove (keerai)
+      return name.split('(')[0].trim().toLowerCase();
+    };
+
+    const nameMap: Record<string, string> = {}; // lowercase canon -> exact DB string
+
     recipes.forEach(r => {
       r.ingredients.forEach(i => {
-        if (!dbIng[i.name]) dbIng[i.name] = { name: i.name, recipesUsing: [] };
-        if (!dbIng[i.name].recipesUsing.includes(r.dishName)) dbIng[i.name].recipesUsing.push(r.dishName);
+        const canon = getCanonical(i.name);
+        if (!nameMap[canon]) {
+          nameMap[canon] = i.name; // Store the first exact string we find
+        }
+        const exact = nameMap[canon];
+        if (!dbIng[exact]) dbIng[exact] = { name: exact, recipesUsing: [] };
+        if (!dbIng[exact].recipesUsing.includes(r.dishName)) dbIng[exact].recipesUsing.push(r.dishName);
       });
     });
     return Object.values(dbIng);
@@ -120,7 +134,15 @@ const App: React.FC = () => {
             <div className="lg:col-span-8">
               <RecipeInput onProcess={handleProcess} isLoading={loading} />
               <div className="space-y-8">
-                {recipes.map(r => <RecipeCard key={r.id} recipe={r} onRemove={deleteRecipe} onUpdate={updateRecipe} />)}
+                {recipes.map(r => (
+                   <RecipeCard 
+                     key={r.id} 
+                     recipe={r} 
+                     onRemove={deleteRecipe} 
+                     onUpdate={updateRecipe} 
+                     allRecipes={recipes}
+                   />
+                ))}
               </div>
             </div>
             <div className="lg:col-span-4">

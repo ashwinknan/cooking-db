@@ -31,6 +31,7 @@ export interface Recipe {
   totalTimeMinutes: number;
   timestamp: number;
   sources?: { uri: string; title: string }[];
+  pairedWith?: string[]; // IDs of other recipes
 }
 
 export interface StandardizedIngredient {

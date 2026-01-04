@@ -14,16 +14,13 @@ export const parseRecipeContent = async (
     You are a professional Culinary Operations Engineer. 
     1. SCALING: All recipes MUST be scaled for EXACTLY 2 servings.
     2. SERVING INFO: Calculate and provide serving size info (e.g., "1 serving = 300g").
-    3. STEP SEPARATION: Separate steps into "pre-start" (overnight soaking, marinating), "prep" (active chopping, washing), and "cooking" (stove, oven).
-    4. REALISTIC TIMING: Be precise. 
-       - Chopping 1 onion: 3 mins. 
-       - Cracking 8 eggs: 1 min. 
-       - Flipping a crepe: 30 secs. 
-       - Cooking a crepe: 2-3 mins total.
-       - DO NOT OVERESTIMATE. Use home-cook standards but assume focused activity.
-    5. UNITS: For shopping, prefer mass (grams/kg). Avoid "jars" or "boxes".
-    6. NO QUANTITIES IN TEXT: In the "steps", say "Add salt", not "Add 1 tsp salt".
-    7. JSON: Output valid JSON.
+    3. STEP SEPARATION: Separate steps into "pre-start" (overnight soaking), "prep" (active chopping), and "cooking" (stove).
+    4. REALISTIC TIMING: Use home-cook standards. Chopping 1 onion = 3m. Cooking a crepe = 2m. 
+    5. INGREDIENT NAMES: STRICTLY use names from the provided "Database ingredients" if they match. Do NOT use synonyms like "Urad Dal (Split Black Gram)" if "Urad Dal" is in the database. 
+    6. NO AMBIGUITY: Do NOT use "OR" in ingredient names (e.g. "Oil or Ghee"). Pick the primary recommended ingredient.
+    7. UNITS: For shopping, prefer mass (grams/kg). Avoid "jars".
+    8. NO QUANTITIES IN TEXT: In the "steps", say "Add salt", not "Add 1 tsp salt".
+    9. JSON: Output valid JSON.
   `;
 
   const prompt = `Parse this: ${content}. Database ingredients: ${existingIngredients.join(",")}`;
@@ -100,10 +97,10 @@ export const generateProductionTimeline = async (
     You are a Kitchen Expeditor. Interleave the steps of these dishes.
     RESOURCES: ${cooks} cooks, ${burners} burners.
     RULES:
-    1. EXCLUDE "pre-start" steps from the active timeline. They are assumed to be done.
-    2. Group "prep" tasks efficiently.
+    1. EXCLUDE "pre-start" steps.
+    2. Group "prep" tasks.
     3. Start "cooking" as burners allow. 
-    4. Provide 'duration' for each specific step and 'timeOffset' as elapsed minutes from start.
+    4. Provide 'duration' for each step and 'timeOffset' (elapsed mins).
   `;
 
   const prompt = `
@@ -116,29 +113,7 @@ export const generateProductionTimeline = async (
     contents: prompt,
     config: {
       systemInstruction,
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          timeline: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                timeOffset: { type: Type.NUMBER },
-                duration: { type: Type.NUMBER },
-                action: { type: Type.STRING },
-                involvedRecipes: { type: Type.ARRAY, items: { type: Type.STRING } },
-                assignees: { type: Type.ARRAY, items: { type: Type.STRING } },
-                isParallel: { type: Type.BOOLEAN },
-                type: { type: Type.STRING }
-              },
-              required: ["timeOffset", "duration", "action", "involvedRecipes", "assignees", "isParallel", "type"]
-            }
-          }
-        },
-        required: ["timeline"]
-      }
+      responseMimeType: "application/json"
     }
   });
 
@@ -155,7 +130,7 @@ export const architectMealPlan = async (
   const systemInstruction = `
     You are a Meal Planning AI. 
     Only use dishes from the provided database.
-    If you cannot fulfill the required variety (${durationDays} days * 3 meals = ${durationDays * 3} slots), specify how many are missing for each category.
+    If variety is low, specify missing counts per category.
   `;
 
   const prompt = `
@@ -169,35 +144,7 @@ export const architectMealPlan = async (
     contents: prompt,
     config: {
       systemInstruction,
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          plan: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                day: { type: Type.NUMBER },
-                breakfast: { type: Type.STRING },
-                lunchDinner: { type: Type.STRING },
-                snack: { type: Type.STRING }
-              },
-              required: ["day", "breakfast", "lunchDinner", "snack"]
-            }
-          },
-          insufficientVariety: { type: Type.BOOLEAN },
-          missingCount: {
-            type: Type.OBJECT,
-            properties: {
-              breakfast: { type: Type.NUMBER },
-              "lunch/dinner": { type: Type.NUMBER },
-              "evening snack": { type: Type.NUMBER }
-            }
-          }
-        },
-        required: ["plan", "insufficientVariety", "missingCount"]
-      }
+      responseMimeType: "application/json"
     }
   });
 
