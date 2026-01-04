@@ -17,7 +17,8 @@ import {
   doc, 
   query, 
   orderBy,
-  deleteDoc
+  deleteDoc,
+  writeBatch
 } from 'firebase/firestore';
 
 const App: React.FC = () => {
@@ -48,23 +49,12 @@ const App: React.FC = () => {
   const masterIngredientsList = useMemo(() => {
     const dbIng: Record<string, StandardizedIngredient> = {};
     
-    // Helper to canonicalize names (e.g. remove parenthetical descriptors)
-    const getCanonical = (name: string) => {
-      // Very simple normalization: lowercase, remove (split ...), remove (keerai)
-      return name.split('(')[0].trim().toLowerCase();
-    };
-
-    const nameMap: Record<string, string> = {}; // lowercase canon -> exact DB string
-
+    // Group exactly by name now, we'll handle normalization via manual merge tools
     recipes.forEach(r => {
       r.ingredients.forEach(i => {
-        const canon = getCanonical(i.name);
-        if (!nameMap[canon]) {
-          nameMap[canon] = i.name; // Store the first exact string we find
-        }
-        const exact = nameMap[canon];
-        if (!dbIng[exact]) dbIng[exact] = { name: exact, recipesUsing: [] };
-        if (!dbIng[exact].recipesUsing.includes(r.dishName)) dbIng[exact].recipesUsing.push(r.dishName);
+        const name = i.name.trim();
+        if (!dbIng[name]) dbIng[name] = { name, recipesUsing: [] };
+        if (!dbIng[name].recipesUsing.includes(r.dishName)) dbIng[name].recipesUsing.push(r.dishName);
       });
     });
     return Object.values(dbIng);
@@ -86,11 +76,43 @@ const App: React.FC = () => {
   };
 
   const deleteRecipe = async (id: string) => {
-    if (confirm("Delete?")) await deleteDoc(doc(db!, "recipes", id));
+    if (confirm("Delete this recipe?")) await deleteDoc(doc(db!, "recipes", id));
   };
 
   const updateRecipe = async (r: Recipe) => {
     await updateDoc(doc(db!, "recipes", r.id), { ...r });
+  };
+
+  const handleMergeIngredients = async (oldNames: string[], newName: string) => {
+    if (!db || recipes.length === 0) return;
+    const batch = writeBatch(db);
+    let count = 0;
+
+    recipes.forEach(recipe => {
+      let changed = false;
+      const updatedIngredients = recipe.ingredients.map(ing => {
+        if (oldNames.includes(ing.name)) {
+          changed = true;
+          return { ...ing, name: newName };
+        }
+        return ing;
+      });
+
+      if (changed) {
+        const recipeRef = doc(db!, "recipes", recipe.id);
+        batch.update(recipeRef, { ingredients: updatedIngredients });
+        count++;
+      }
+    });
+
+    if (count > 0) {
+      await batch.commit();
+      console.log(`Successfully merged ingredients in ${count} recipes.`);
+    }
+  };
+
+  const handleRenameIngredient = async (oldName: string, newName: string) => {
+    await handleMergeIngredients([oldName], newName);
   };
 
   if (authLoading) return <div className="h-screen flex items-center justify-center bg-slate-900 text-white font-black uppercase tracking-widest animate-pulse">Initializing OS...</div>;
@@ -109,7 +131,6 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 pb-20 md:pb-0">
-      {/* Top Navigation */}
       <nav className="sticky top-0 z-[200] bg-slate-900 text-white h-20 shadow-2xl">
         <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -127,7 +148,6 @@ const App: React.FC = () => {
         </div>
       </nav>
 
-      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-10">
         {activeTab === 'cms' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
@@ -147,7 +167,11 @@ const App: React.FC = () => {
             </div>
             <div className="lg:col-span-4">
               <div className="sticky top-28">
-                <IngredientDatabase ingredients={masterIngredientsList} />
+                <IngredientDatabase 
+                  ingredients={masterIngredientsList} 
+                  onMerge={handleMergeIngredients}
+                  onRename={handleRenameIngredient}
+                />
               </div>
             </div>
           </div>
