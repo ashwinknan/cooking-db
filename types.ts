@@ -1,5 +1,5 @@
 
-export type RecipeCategory = string; // Now dynamic
+export type RecipeCategory = string;
 export type StepType = 'pre-start' | 'prep' | 'cooking';
 
 export interface Quantity {
@@ -32,7 +32,7 @@ export interface Recipe {
   totalTimeMinutes: number;
   timestamp: number;
   sources?: { uri: string; title: string }[];
-  pairedWith?: string[]; // IDs of other recipes
+  pairedWith?: string[];
 }
 
 export interface StandardizedIngredient {

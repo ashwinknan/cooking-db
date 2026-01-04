@@ -11,18 +11,16 @@ export const parseRecipeContent = async (
   const model = "gemini-3-pro-preview";
 
   const systemInstruction = `
-    You are a friendly home-cooking assistant.
-    1. SCALING: All recipes MUST be scaled for EXACTLY 2 servings.
-    2. CUISINE: Identify the cuisine (e.g., Italian, Indian, Mexican).
-    3. SERVING INFO: Calculate and provide serving size info (e.g., "1 serving = 300g").
-    4. STEP SEPARATION: Separate steps into "pre-start" (e.g. soaking), "prep" (active chopping), and "cooking" (heat/stove).
-    5. REALISTIC TIMING: Use home-cook standards for durationMinutes.
-    6. INGREDIENT NAMES: STRICTLY use names from the provided "Database ingredients" if they match.
-    7. NO AMBIGUITY: Pick one primary ingredient if a recipe says "Oil or Ghee".
-    8. JSON: Output valid JSON.
+    You are a professional kitchen operations analyst.
+    1. MISSION: Standardize raw recipe data into a clean, operational format.
+    2. SCALING: Scale ingredients precisely for EXACTLY 2 servings.
+    3. CUISINE: Identify the primary cuisine (e.g., Indian, Italian, Mediterranean).
+    4. STEPS: Separate into "pre-start" (advanced prep), "prep" (active knife work/assembly), and "cooking" (heat/stoves).
+    5. INGREDIENTS: Use the provided "Database ingredients" names if a close match exists to avoid duplicates.
+    6. OUTPUT: Strict JSON only.
   `;
 
-  const prompt = `Parse this recipe: ${content}. Database ingredients: ${existingIngredients.join(",")}`;
+  const prompt = `Parse this content: ${content}. Database ingredients for mapping: ${existingIngredients.join(",")}`;
 
   const response = await ai.models.generateContent({
     model,
@@ -46,18 +44,12 @@ export const parseRecipeContent = async (
                 name: { type: Type.STRING },
                 kitchen: {
                   type: Type.OBJECT,
-                  properties: {
-                    value: { type: Type.NUMBER },
-                    unit: { type: Type.STRING }
-                  },
+                  properties: { value: { type: Type.NUMBER }, unit: { type: Type.STRING } },
                   required: ["value", "unit"]
                 },
                 shopping: {
                   type: Type.OBJECT,
-                  properties: {
-                    value: { type: Type.NUMBER },
-                    unit: { type: Type.STRING }
-                  },
+                  properties: { value: { type: Type.NUMBER }, unit: { type: Type.STRING } },
                   required: ["value", "unit"]
                 }
               },
@@ -92,30 +84,15 @@ export const generateProductionTimeline = async (
   burners: number
 ): Promise<ProductionSchedule> => {
   const model = "gemini-3-pro-preview";
-  
-  const systemInstruction = `
-    You are a friendly Kitchen Helper. Interleave the steps of these dishes to make cooking efficient.
-    RESOURCES: ${cooks} cooks, ${burners} burners.
-    RULES:
-    1. EXCLUDE "pre-start" steps.
-    2. Interleave prep and cooking to save time.
-    3. Output 'duration' for each step and 'timeOffset' (elapsed mins).
-  `;
-
-  const prompt = `
-    DISHES: ${selections.map(s => `${s.recipe.dishName} (${s.servings} servings)`).join(", ")}
-    RECIPE DATA: ${JSON.stringify(selections.map(s => s.recipe))}
-  `;
-
+  const prompt = `Interleave steps for: ${selections.map(s => s.recipe.dishName).join(", ")}. Resources: ${cooks} cooks, ${burners} burners.`;
   const response = await ai.models.generateContent({
     model,
     contents: prompt,
     config: {
-      systemInstruction,
+      systemInstruction: "Create an efficient, interleaved kitchen production schedule. Exclude pre-start steps. Return JSON.",
       responseMimeType: "application/json"
     }
   });
-
   return JSON.parse(response.text || '{"timeline":[]}');
 };
 
@@ -125,27 +102,14 @@ export const architectMealPlan = async (
   fridgeInventory: string
 ): Promise<MealPlanResult> => {
   const model = "gemini-3-flash-preview";
-  
-  const systemInstruction = `
-    You are a Meal Planning Buddy. 
-    Suggest a balanced plan using only the recipes provided in the list.
-    Try to incorporate ingredients from the "fridge surplus" if mentioned.
-  `;
-
-  const prompt = `
-    FRIDGE SURPLUS: ${fridgeInventory}
-    DURATION: ${durationDays} days.
-    DATABASE RECIPES: ${dbRecipes.map(r => `${r.dishName} (${r.category}, ${r.cuisine})`).join(", ")}
-  `;
-
+  const prompt = `Plan for ${durationDays} days using these recipes: ${dbRecipes.map(r => r.dishName).join(", ")}. Fridge: ${fridgeInventory}`;
   const response = await ai.models.generateContent({
     model,
     contents: prompt,
     config: {
-      systemInstruction,
+      systemInstruction: "Architect a meal plan. Return JSON.",
       responseMimeType: "application/json"
     }
   });
-
-  return JSON.parse(response.text || '{"plan":[], "insufficientVariety": false, "missingCount": {}}');
+  return JSON.parse(response.text || '{"plan":[]}');
 };
