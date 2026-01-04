@@ -176,7 +176,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
                     
                     <h4 className="text-orange-400 text-[10px] font-black uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
                        <div className="w-1 h-1 bg-orange-400 rounded-full"></div>
-                       Procurement Check
+                       Inventory Check
                     </h4>
                     <div className="space-y-3">
                        {recipe.ingredients.map((ing, i) => (
@@ -212,7 +212,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
                     <p className="text-xl font-bold text-slate-800 leading-snug mb-14 text-center min-h-[120px] flex items-center justify-center">{recipe.steps[currentStepIndex-1].instruction}</p>
                     <button 
                       onClick={() => toggleStepComplete(currentStepIndex-1)}
-                      className={`w-full py-5 rounded-[2rem] font-black text-sm uppercase tracking-[0.2em] transition-all shadow-xl active:scale-95 flex items-center justify-center gap-3 ${completedSteps.has(currentStepIndex-1) ? 'bg-green-600 text-white' : 'bg-slate-900 text-white hover:bg-black'}`}
+                      className={`w-full py-5 rounded-[2rem] font-black text-sm uppercase tracking-[0.2em] transition-all shadow-xl active:scale-95 flex items-center justify-center gap-3 ${completedSteps.has(currentStepIndex-1) ? 'bg-green-600 text-white shadow-green-500/20' : 'bg-slate-900 text-white hover:bg-black shadow-slate-900/20'}`}
                     >
                       {completedSteps.has(currentStepIndex-1) ? (
                         <>
@@ -227,7 +227,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
 
             {showIngredientsOverlay && (
               <div className="absolute inset-0 bg-slate-900/98 z-[100] p-10 flex flex-col animate-in fade-in slide-in-from-bottom-10" onClick={() => setShowIngredientsOverlay(false)}>
-                 <h3 className="text-white text-3xl font-black mb-10 tracking-tighter italic">Pantry Bridge</h3>
+                 <h3 className="text-white text-3xl font-black mb-10 tracking-tighter italic">Ingredient Reference</h3>
                  <div className="space-y-5 overflow-y-auto">
                     {recipe.ingredients.map((ing, i) => (
                       <div key={i} className="flex justify-between items-center text-slate-100 text-2xl font-bold border-b border-white/5 pb-4">
@@ -247,7 +247,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
              </button>
              {currentStepIndex > 0 && <button onClick={() => setCurrentStepIndex(currentStepIndex-1)} className="flex-1 bg-slate-700 text-white font-black rounded-[1.5rem] text-[11px] uppercase tracking-widest border border-slate-600">Back</button>}
              <button onClick={() => currentStepIndex < recipe.steps.length ? setCurrentStepIndex(currentStepIndex+1) : setIsCookingMode(false)} className="flex-[2] bg-orange-600 text-white font-black rounded-[1.5rem] text-[11px] uppercase tracking-[0.2em] shadow-xl active:scale-95 shadow-orange-500/10 transition-all">
-                {currentStepIndex === 0 ? 'Initialize Session' : currentStepIndex === recipe.steps.length ? 'Finalize Operations' : 'Next Task'}
+                {currentStepIndex === 0 ? 'Start Cooking' : currentStepIndex === recipe.steps.length ? 'Finalize' : 'Next Task'}
              </button>
           </footer>
         </div>
