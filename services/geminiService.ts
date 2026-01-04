@@ -13,10 +13,17 @@ export const parseRecipeContent = async (
   const systemInstruction = `
     You are a professional Culinary Operations Engineer. 
     1. SCALING: All recipes MUST be scaled for EXACTLY 2 servings.
-    2. STEP SEPARATION: Separate steps into "prep" (chopping, washing, organizing) and "cooking" (stove, oven, microwave, flame).
-    3. REALISTIC TIMING: Be generous with prep times. Assume a home cook using raw, un-processed ingredients. Chopping 1 onion = 4 mins, 1 tomato = 3 mins, etc.
-    4. NO QUANTITIES IN TEXT: In the "steps" instructions, do NOT mention specific amounts (e.g., say "Add salt", not "Add 1 tsp salt").
-    5. JSON: Output valid JSON matching the provided schema.
+    2. SERVING INFO: Calculate and provide serving size info (e.g., "1 serving = 300g").
+    3. STEP SEPARATION: Separate steps into "pre-start" (overnight soaking, marinating), "prep" (active chopping, washing), and "cooking" (stove, oven).
+    4. REALISTIC TIMING: Be precise. 
+       - Chopping 1 onion: 3 mins. 
+       - Cracking 8 eggs: 1 min. 
+       - Flipping a crepe: 30 secs. 
+       - Cooking a crepe: 2-3 mins total.
+       - DO NOT OVERESTIMATE. Use home-cook standards but assume focused activity.
+    5. UNITS: For shopping, prefer mass (grams/kg). Avoid "jars" or "boxes".
+    6. NO QUANTITIES IN TEXT: In the "steps", say "Add salt", not "Add 1 tsp salt".
+    7. JSON: Output valid JSON.
   `;
 
   const prompt = `Parse this: ${content}. Database ingredients: ${existingIngredients.join(",")}`;
@@ -32,6 +39,7 @@ export const parseRecipeContent = async (
         properties: {
           dishName: { type: Type.STRING },
           category: { type: Type.STRING },
+          servingSizeInfo: { type: Type.STRING },
           variations: { type: Type.ARRAY, items: { type: Type.STRING } },
           ingredients: {
             type: Type.ARRAY,
@@ -66,14 +74,14 @@ export const parseRecipeContent = async (
               properties: {
                 instruction: { type: Type.STRING },
                 durationMinutes: { type: Type.NUMBER },
-                type: { type: Type.STRING }
+                type: { type: Type.STRING, enum: ["pre-start", "prep", "cooking"] }
               },
               required: ["instruction", "durationMinutes", "type"]
             }
           },
           totalTimeMinutes: { type: Type.NUMBER }
         },
-        required: ["dishName", "category", "variations", "ingredients", "steps", "totalTimeMinutes"]
+        required: ["dishName", "category", "servingSizeInfo", "variations", "ingredients", "steps", "totalTimeMinutes"]
       }
     }
   });
@@ -91,11 +99,11 @@ export const generateProductionTimeline = async (
   const systemInstruction = `
     You are a Kitchen Expeditor. Interleave the steps of these dishes.
     RESOURCES: ${cooks} cooks, ${burners} burners.
-    OPTIMIZATION:
-    - Group all "prep" tasks at the start.
-    - Start "cooking" tasks as soon as burners are free.
-    - While a dish is simmering/boiling (idle time), assign a cook to another prep task.
-    - Output a logical timeline. Use the EXACT instructions from the recipes.
+    RULES:
+    1. EXCLUDE "pre-start" steps from the active timeline. They are assumed to be done.
+    2. Group "prep" tasks efficiently.
+    3. Start "cooking" as burners allow. 
+    4. Provide 'duration' for each specific step and 'timeOffset' as elapsed minutes from start.
   `;
 
   const prompt = `
@@ -118,13 +126,14 @@ export const generateProductionTimeline = async (
               type: Type.OBJECT,
               properties: {
                 timeOffset: { type: Type.NUMBER },
+                duration: { type: Type.NUMBER },
                 action: { type: Type.STRING },
                 involvedRecipes: { type: Type.ARRAY, items: { type: Type.STRING } },
                 assignees: { type: Type.ARRAY, items: { type: Type.STRING } },
                 isParallel: { type: Type.BOOLEAN },
                 type: { type: Type.STRING }
               },
-              required: ["timeOffset", "action", "involvedRecipes", "assignees", "isParallel", "type"]
+              required: ["timeOffset", "duration", "action", "involvedRecipes", "assignees", "isParallel", "type"]
             }
           }
         },
@@ -145,14 +154,14 @@ export const architectMealPlan = async (
   
   const systemInstruction = `
     You are a Meal Planning AI. 
-    STRICT RULE: Only use dishes from this list: [${dbRecipes.map(r => r.dishName).join(", ")}].
-    CRITICAL: If there are fewer than ${durationDays * 2} unique recipes in the database, set "insufficientVariety" to true.
-    GUIDANCE: Use the "Fridge Surplus" as a priority to finish ingredients.
+    Only use dishes from the provided database.
+    If you cannot fulfill the required variety (${durationDays} days * 3 meals = ${durationDays * 3} slots), specify how many are missing for each category.
   `;
 
   const prompt = `
     FRIDGE: ${fridgeInventory}
     DURATION: ${durationDays} days.
+    DATABASE: ${dbRecipes.map(r => `${r.dishName} (${r.category})`).join(", ")}
   `;
 
   const response = await ai.models.generateContent({
@@ -177,12 +186,20 @@ export const architectMealPlan = async (
               required: ["day", "breakfast", "lunchDinner", "snack"]
             }
           },
-          insufficientVariety: { type: Type.BOOLEAN }
+          insufficientVariety: { type: Type.BOOLEAN },
+          missingCount: {
+            type: Type.OBJECT,
+            properties: {
+              breakfast: { type: Type.NUMBER },
+              "lunch/dinner": { type: Type.NUMBER },
+              "evening snack": { type: Type.NUMBER }
+            }
+          }
         },
-        required: ["plan", "insufficientVariety"]
+        required: ["plan", "insufficientVariety", "missingCount"]
       }
     }
   });
 
-  return JSON.parse(response.text || '{"plan":[], "insufficientVariety": false}');
+  return JSON.parse(response.text || '{"plan":[], "insufficientVariety": false, "missingCount": {}}');
 };

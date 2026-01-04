@@ -1,6 +1,6 @@
 
 export type RecipeCategory = 'breakfast' | 'lunch/dinner' | 'evening snack';
-export type StepType = 'prep' | 'cooking';
+export type StepType = 'pre-start' | 'prep' | 'cooking';
 
 export interface Quantity {
   value: number;
@@ -16,7 +16,7 @@ export interface Ingredient {
 export interface RecipeStep {
   instruction: string;
   durationMinutes: number;
-  type: StepType; // prep vs cooking
+  type: StepType; // pre-start, prep, cooking
 }
 
 export interface Recipe {
@@ -25,6 +25,7 @@ export interface Recipe {
   category: RecipeCategory;
   variations: string[];
   servings: number; // Always 2 by default
+  servingSizeInfo: string; // e.g., "1 serving = 350g"
   ingredients: Ingredient[];
   steps: RecipeStep[];
   totalTimeMinutes: number;
@@ -32,16 +33,14 @@ export interface Recipe {
   sources?: { uri: string; title: string }[];
 }
 
-/**
- * Interface for aggregated ingredient information used in the master pantry view.
- */
 export interface StandardizedIngredient {
   name: string;
   recipesUsing: string[];
 }
 
 export interface TimelineStep {
-  timeOffset: number;
+  timeOffset: number; // Elapsed from start
+  duration: number;   // Duration of this specific step
   action: string;
   involvedRecipes: string[];
   assignees: string[];
@@ -63,4 +62,5 @@ export interface ProductionSchedule {
 export interface MealPlanResult {
   plan: MealPlanDay[];
   insufficientVariety: boolean;
+  missingCount: Record<RecipeCategory, number>;
 }

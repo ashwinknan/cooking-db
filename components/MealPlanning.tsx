@@ -11,16 +11,16 @@ export const MealPlanning: React.FC<MealPlanningProps> = ({ allRecipes }) => {
   const [fridge, setFridge] = useState('');
   const [days, setDays] = useState(3);
   const [plan, setPlan] = useState<MealPlanDay[]>([]);
-  const [insufficient, setInsufficient] = useState(false);
+  const [insufficient, setInsufficient] = useState<{ variety: boolean; missing: any }>({ variety: false, missing: null });
   const [isProcessing, setIsProcessing] = useState(false);
 
   const runArchitect = async () => {
     setIsProcessing(true);
-    setInsufficient(false);
+    setInsufficient({ variety: false, missing: null });
     try {
       const res = await architectMealPlan(allRecipes, days, fridge);
       if (res.insufficientVariety) {
-        setInsufficient(true);
+        setInsufficient({ variety: true, missing: res.missingCount });
       } else {
         setPlan(res.plan);
       }
@@ -41,19 +41,19 @@ export const MealPlanning: React.FC<MealPlanningProps> = ({ allRecipes }) => {
 
         <div className="space-y-6">
           <div>
-            <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block">Fridge Inventory (Surplus guidance)</label>
+            <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block">Fridge Surplus Guidance</label>
             <textarea 
               value={fridge}
               onChange={e => setFridge(e.target.value)}
-              placeholder="e.g. 2 lemons, wilted spinach, chicken breasts..."
+              placeholder="List items to prioritize..."
               className="w-full bg-slate-50 p-4 rounded-2xl border-none outline-none text-sm font-bold text-slate-700 h-24 resize-none"
             />
           </div>
 
           <div className="flex items-center justify-between">
-            <label className="text-[10px] font-black uppercase text-slate-400">Planning Window</label>
+            <label className="text-[10px] font-black uppercase text-slate-400">Duration (Days)</label>
             <div className="flex gap-2">
-              {[1, 3, 5, 7].map(n => (
+              {[1, 3, 7].map(n => (
                 <button 
                   key={n}
                   onClick={() => setDays(n)}
@@ -75,22 +75,38 @@ export const MealPlanning: React.FC<MealPlanningProps> = ({ allRecipes }) => {
         </div>
       </div>
 
-      {insufficient && (
-        <div className="bg-orange-50 border border-orange-200 p-8 rounded-[2.5rem] mb-8 text-center">
-          <p className="text-orange-800 font-bold mb-2">Insufficient Variety</p>
-          <p className="text-orange-700 text-xs font-medium leading-relaxed">
-            Your database only has {allRecipes.length} recipes. To create a balanced plan for {days} days, please add more dishes to your CMS first.
+      {insufficient.variety && (
+        <div className="bg-orange-50 border border-orange-200 p-8 rounded-[2.5rem] mb-8">
+          <p className="text-orange-800 font-black mb-4 flex items-center gap-2 uppercase text-xs tracking-widest">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+            Variety Gap Detected
           </p>
+          <div className="space-y-4">
+             <p className="text-orange-700 text-xs font-medium leading-relaxed">
+              Your CMS database requires more entries to generate a non-repetitive {days}-day plan.
+             </p>
+             <div className="grid grid-cols-3 gap-2">
+                <div className="bg-white/50 p-3 rounded-xl border border-orange-100">
+                  <span className="block text-[8px] font-black uppercase text-orange-400">Breakfast</span>
+                  <span className="text-lg font-black text-orange-800">+{insufficient.missing?.breakfast || 0}</span>
+                </div>
+                <div className="bg-white/50 p-3 rounded-xl border border-orange-100">
+                  <span className="block text-[8px] font-black uppercase text-orange-400">Lunch/Dinner</span>
+                  <span className="text-lg font-black text-orange-800">+{insufficient.missing?.['lunch/dinner'] || 0}</span>
+                </div>
+                <div className="bg-white/50 p-3 rounded-xl border border-orange-100">
+                  <span className="block text-[8px] font-black uppercase text-orange-400">Snack</span>
+                  <span className="text-lg font-black text-orange-800">+{insufficient.missing?.['evening snack'] || 0}</span>
+                </div>
+             </div>
+          </div>
         </div>
       )}
 
       <div className="space-y-4">
         {plan.map(day => (
           <div key={day.day} className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Schedule • Day {day.day}</span>
-              <span className="text-[8px] font-black bg-blue-50 text-blue-600 px-2 py-1 rounded">PROCESSED</span>
-            </div>
+            <h5 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">Day {day.day} Production</h5>
             <div className="space-y-3">
               <div className="flex items-center gap-4">
                 <span className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-[10px] font-black">B</span>
