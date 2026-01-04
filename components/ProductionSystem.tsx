@@ -38,12 +38,17 @@ export const ProductionSystem: React.FC<ProductionSystemProps> = ({ allRecipes }
     return Object.values(totals);
   }, [selectedRecipeIds, allRecipes]);
 
+  // Fix: Map Recipe[] to { recipe: Recipe; servings: number; }[]
   const handleGenerateTimeline = async () => {
     if (selectedRecipeIds.length === 0) return;
     setIsProcessing(true);
     try {
       const recipes = allRecipes.filter(r => selectedRecipeIds.includes(r.id));
-      const res = await generateProductionTimeline(recipes, cooks, burners);
+      const res = await generateProductionTimeline(
+        recipes.map(r => ({ recipe: r, servings: r.servings || 2 })),
+        cooks,
+        burners
+      );
       setTimeline(res.timeline);
     } catch (e) {
       console.error(e);
