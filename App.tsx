@@ -27,12 +27,11 @@ import {
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'cms' | 'ops' | 'planning' | 'inventory'>('cms');
+  const [activeTab, setActiveTab] = useState<'library' | 'cook' | 'plan' | 'pantry'>('library');
   const [recipes, setRecipes] = useState<Recipe[]>([]);
-  const [categories, setCategories] = useState<string[]>(['Breakfast', 'Lunch/Dinner', 'Evening Snack']);
+  const [categories, setCategories] = useState<string[]>(['Breakfast', 'Lunch/Dinner', 'Snack']);
   const [loading, setLoading] = useState(false);
   
-  // Mobile UI States
   const [showPantryMobile, setShowPantryMobile] = useState(false);
 
   useEffect(() => {
@@ -89,7 +88,7 @@ const App: React.FC = () => {
   };
 
   const deleteRecipe = async (id: string) => {
-    if (confirm("Delete this recipe?")) {
+    if (confirm("Remove this recipe from your collection?")) {
       const batch = writeBatch(db!);
       recipes.forEach(r => {
         if (r.pairedWith?.includes(id)) {
@@ -145,15 +144,15 @@ const App: React.FC = () => {
     await handleMergeIngredients([oldName], newName);
   };
 
-  if (authLoading) return <div className="h-screen flex items-center justify-center bg-slate-900 text-white font-black animate-pulse">Initializing OS...</div>;
+  if (authLoading) return <div className="h-screen flex items-center justify-center bg-slate-900 text-white font-black animate-pulse">Setting up your kitchen...</div>;
 
   if (!user) return (
     <div className="h-screen bg-slate-900 flex items-center justify-center p-6">
       <div className="bg-white p-12 rounded-[2.5rem] text-center shadow-2xl w-full max-w-md">
-        <h1 className="text-4xl font-black mb-2 tracking-tighter">Cooking <span className="text-orange-500">Ops</span></h1>
-        <p className="text-slate-400 mb-8 font-bold text-[10px] uppercase tracking-[0.2em]">Kitchen OS Production</p>
-        <button onClick={loginWithGoogle} className="w-full py-4 px-8 bg-slate-900 text-white rounded-2xl font-black flex items-center justify-center gap-3">
-          Login with Google
+        <h1 className="text-4xl font-black mb-2 tracking-tighter text-slate-900">Cooking <span className="text-orange-500">Buddy</span></h1>
+        <p className="text-slate-400 mb-8 font-bold text-[10px] uppercase tracking-[0.2em]">Your Personal Recipe Home</p>
+        <button onClick={loginWithGoogle} className="w-full py-4 px-8 bg-slate-900 text-white rounded-2xl font-black hover:bg-black transition-all active:scale-95 flex items-center justify-center gap-3">
+          Sign In with Google
         </button>
       </div>
     </div>
@@ -167,17 +166,22 @@ const App: React.FC = () => {
             <div className="w-8 h-8 md:w-10 md:h-10 bg-orange-500 rounded-xl flex items-center justify-center">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>
             </div>
-            <h1 className="text-lg font-black tracking-tighter">Ops</h1>
+            <h1 className="text-lg font-black tracking-tighter">Buddy</h1>
           </div>
           
           <div className="flex gap-1 md:gap-4 overflow-x-auto no-scrollbar py-2">
-            {['cms', 'ops', 'planning', 'inventory'].map((tab) => (
+            {[
+              { id: 'library', label: 'My Recipes' },
+              { id: 'cook', label: 'Let\'s Cook' },
+              { id: 'plan', label: 'Meal Plan' },
+              { id: 'pantry', label: 'Pantry' }
+            ].map((tab) => (
               <button 
-                key={tab}
-                onClick={() => setActiveTab(tab as any)} 
-                className={`px-3 py-1.5 md:px-5 md:py-2 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab ? 'bg-orange-500 text-white' : 'text-slate-400'}`}
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)} 
+                className={`px-3 py-1.5 md:px-5 md:py-2 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-orange-500 text-white' : 'text-slate-400'}`}
               >
-                {tab === 'cms' ? 'Library' : tab === 'ops' ? 'Cooking' : tab === 'planning' ? 'Planning' : 'Items'}
+                {tab.label}
               </button>
             ))}
           </div>
@@ -185,13 +189,11 @@ const App: React.FC = () => {
       </nav>
 
       <main className="max-w-7xl mx-auto px-4 py-6 md:py-10 flex-1 w-full">
-        {activeTab === 'cms' && (
+        {activeTab === 'library' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             <div className="lg:col-span-8 flex flex-col gap-6">
-              {/* URL Input on Top */}
               <RecipeInput onProcess={handleProcess} isLoading={loading} />
               
-              {/* Recipe List */}
               <div className="space-y-4 md:space-y-8">
                 {recipes.length > 0 ? (
                   recipes.map(r => (
@@ -207,18 +209,17 @@ const App: React.FC = () => {
                   ))
                 ) : (
                   <div className="text-center py-20 bg-white rounded-[2.5rem] border border-dashed border-slate-200">
-                    <p className="text-slate-400 text-sm font-bold uppercase tracking-widest">Your library is empty</p>
+                    <p className="text-slate-400 text-sm font-bold uppercase tracking-widest">Add your first recipe to get started!</p>
                   </div>
                 )}
               </div>
 
-              {/* Mobile Only: Collapsible Tools */}
               <div className="lg:hidden mt-4 space-y-4">
                  <button 
                    onClick={() => setShowPantryMobile(!showPantryMobile)}
                    className="w-full bg-slate-900 text-white p-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex items-center justify-between"
                  >
-                    <span>Pantry & Categories Core</span>
+                    <span>Ingredients & Categories</span>
                     <svg className={`transition-transform ${showPantryMobile ? 'rotate-180' : ''}`} xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
                  </button>
                  
@@ -230,13 +231,13 @@ const App: React.FC = () => {
                         onRename={handleRenameIngredient}
                       />
                       <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
-                        <h3 className="text-xs font-black uppercase text-slate-400 mb-4 tracking-widest">Categories Manager</h3>
+                        <h3 className="text-xs font-black uppercase text-slate-400 mb-4 tracking-widest">Recipe Categories</h3>
                         <div className="flex flex-wrap gap-2 mb-4">
                           {categories.map(c => <span key={c} className="bg-slate-50 border border-slate-100 px-3 py-1.5 rounded-xl text-[10px] font-bold text-slate-600">{c}</span>)}
                         </div>
                         <div className="flex gap-2">
                           <input 
-                            placeholder="New Category..." 
+                            placeholder="Add new category..." 
                             className="flex-1 bg-slate-50 border-none p-3 rounded-xl text-xs font-bold outline-none ring-1 ring-slate-100 focus:ring-orange-500"
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') {
@@ -252,7 +253,6 @@ const App: React.FC = () => {
               </div>
             </div>
 
-            {/* Desktop Only: Sidebar Core */}
             <div className="hidden lg:block lg:col-span-4">
               <div className="sticky top-28 space-y-6">
                 <IngredientDatabase 
@@ -261,13 +261,12 @@ const App: React.FC = () => {
                   onRename={handleRenameIngredient}
                 />
                 <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
-                  <h3 className="text-xs font-black uppercase text-slate-400 mb-4 tracking-widest">Categories Manager</h3>
+                  <h3 className="text-xs font-black uppercase text-slate-400 mb-4 tracking-widest">Categories</h3>
                   <div className="flex flex-wrap gap-2 mb-4">
                     {categories.map(c => <span key={c} className="bg-slate-50 border border-slate-100 px-3 py-1.5 rounded-xl text-[10px] font-bold text-slate-600">{c}</span>)}
                   </div>
                   <div className="flex gap-2">
                     <input 
-                      id="desktopNewCatInput"
                       placeholder="Add Category..." 
                       className="flex-1 bg-slate-50 border-none p-2.5 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-orange-500"
                       onKeyDown={(e) => {
@@ -283,12 +282,12 @@ const App: React.FC = () => {
             </div>
           </div>
         )}
-        {activeTab === 'ops' && <CookingOps allRecipes={recipes} />}
-        {activeTab === 'planning' && <MealPlanning allRecipes={recipes} />}
-        {activeTab === 'inventory' && (
+        {activeTab === 'cook' && <CookingOps allRecipes={recipes} />}
+        {activeTab === 'plan' && <MealPlanning allRecipes={recipes} />}
+        {activeTab === 'pantry' && (
           <div className="max-w-xl mx-auto text-center py-20 bg-white rounded-[2.5rem] border-2 border-dashed border-slate-200">
-            <h2 className="text-2xl font-black mb-2">Inventory System</h2>
-            <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">Coming Soon in Phase 3</p>
+            <h2 className="text-2xl font-black mb-2 text-slate-900">Pantry Tracker</h2>
+            <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest italic">Coming soon: Track what's in your fridge!</p>
           </div>
         )}
       </main>
