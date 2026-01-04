@@ -34,6 +34,11 @@ const App: React.FC = () => {
   const [showPantryMobile, setShowPantryMobile] = useState(false);
   const [contactEmail, setContactEmail] = useState('');
 
+  // Search and Filter State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterCategory, setFilterCategory] = useState('');
+  const [filterCuisine, setFilterCuisine] = useState('');
+
   useEffect(() => {
     if (!auth) { setAuthLoading(false); return; }
     return onAuthStateChanged(auth, (u) => { setUser(u); setAuthLoading(false); });
@@ -70,6 +75,25 @@ const App: React.FC = () => {
     });
     return Object.values(dbIng);
   }, [recipes]);
+
+  const uniqueCuisines = useMemo(() => {
+    const set = new Set<string>();
+    recipes.forEach(r => { if (r.cuisine) set.add(r.cuisine); });
+    return Array.from(set).sort();
+  }, [recipes]);
+
+  const filteredRecipes = useMemo(() => {
+    return recipes.filter(r => {
+      const q = searchQuery.toLowerCase();
+      const matchesSearch = !searchQuery || 
+        r.dishName.toLowerCase().includes(q) || 
+        r.cuisine?.toLowerCase().includes(q) ||
+        r.variations?.some(v => v.toLowerCase().includes(q));
+      const matchesCategory = !filterCategory || r.category === filterCategory;
+      const matchesCuisine = !filterCuisine || r.cuisine === filterCuisine;
+      return matchesSearch && matchesCategory && matchesCuisine;
+    });
+  }, [recipes, searchQuery, filterCategory, filterCuisine]);
 
   const handleProcess = async (content: string) => {
     setLoading(true);
@@ -144,60 +168,61 @@ const App: React.FC = () => {
     await handleMergeIngredients([oldName], newName);
   };
 
-  if (authLoading) return <div className="h-screen flex items-center justify-center bg-slate-900 text-white font-black animate-pulse">Setting up your kitchen...</div>;
+  if (authLoading) return <div className="h-screen flex items-center justify-center bg-slate-900 text-white font-black animate-pulse">Setting up your kitchen Buddy...</div>;
 
   if (!user) return (
     <div className="min-h-screen bg-slate-50 flex flex-col items-center">
-      {/* Hero Section */}
-      <section className="w-full bg-slate-900 py-20 px-6 text-center text-white rounded-b-[4rem] shadow-2xl">
-        <div className="max-w-4xl mx-auto">
-          <div className="w-16 h-16 bg-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-xl">
-             <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>
+      <header className="w-full bg-slate-900 py-20 px-6 text-center text-white rounded-b-[3rem] md:rounded-b-[5rem] shadow-2xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/10 blur-[100px] rounded-full pointer-events-none"></div>
+        <div className="max-w-4xl mx-auto relative z-10">
+          <div className="w-20 h-20 bg-orange-500 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-2xl rotate-3">
+             <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>
           </div>
-          <h1 className="text-5xl md:text-7xl font-black mb-6 tracking-tighter">Cooking <span className="text-orange-500">Buddy</span></h1>
+          <h1 className="text-5xl md:text-8xl font-black mb-6 tracking-tighter">Cooking <span className="text-orange-500">Buddy</span></h1>
           <p className="text-xl md:text-2xl text-slate-300 font-medium mb-12 max-w-2xl mx-auto leading-relaxed">
-            Stop searching, start cooking. We turn messy recipe links into standardized, interactive guides for your home kitchen.
+            Your interactive kitchen memory. Save recipes from any link, standardized and ready to cook in a tap.
           </p>
-          <button onClick={loginWithGoogle} className="bg-white text-slate-900 px-10 py-5 rounded-[2rem] font-black text-lg shadow-2xl hover:bg-slate-100 transition-all active:scale-95 flex items-center justify-center gap-3 mx-auto">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
-            Let's Get Cooking
+          <button onClick={loginWithGoogle} className="bg-white text-slate-900 px-10 py-5 rounded-[2rem] font-black text-lg shadow-2xl hover:bg-slate-100 transition-all active:scale-95 flex items-center justify-center gap-4 mx-auto">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="21.17" y1="8" x2="12" y2="8"/><line x1="3.95" y1="6.06" x2="8.54" y2="14"/><line x1="10.88" y1="21.94" x2="15.46" y2="14"/></svg>
+            Sign In with Google
           </button>
         </div>
-      </section>
+      </header>
 
-      {/* Vision Section */}
-      <section className="max-w-4xl mx-auto py-20 px-6">
-        <h2 className="text-3xl font-black text-slate-900 mb-8 tracking-tight">Why Buddy?</h2>
-        <div className="grid md:grid-cols-2 gap-12 text-slate-600 leading-relaxed text-lg">
-          <p>
-            The internet is full of amazing recipes buried under miles of ads and backstories. <strong>Cooking Buddy</strong> strips away the noise. We extract just the data—standardizing ingredients, scaling portions, and creating a clean interface that works while your hands are messy.
+      <section className="max-w-4xl mx-auto py-24 px-6 grid md:grid-cols-2 gap-16">
+        <div>
+          <h2 className="text-3xl font-black text-slate-900 mb-6 tracking-tight">Standardized for You</h2>
+          <p className="text-lg text-slate-600 leading-relaxed">
+            We don't just "save" recipes. We <strong>standardize</strong> them. Every link you paste is parsed by AI to ensure quantities are consistent, portions are scaled for two, and steps are grouped by activity type. It's the cleanest recipe library you'll ever own.
           </p>
-          <p>
-            Our vision is to build a unified operating system for your kitchen. One where your library, your pantry, and your cooking schedule speak the same language. No more "pinch of this" or "small jar of that"—just precise, actionable guidance.
+        </div>
+        <div>
+          <h2 className="text-3xl font-black text-slate-900 mb-6 tracking-tight">Operationally Optimized</h2>
+          <p className="text-lg text-slate-600 leading-relaxed">
+            Once your recipes are in Buddy, you can optimize your cooking. Interleave steps from multiple dishes, plan your week based on what's in your fridge, and cook with a mobile-first interface designed for busy hands.
           </p>
         </div>
       </section>
 
-      {/* Contact Section */}
-      <section className="w-full bg-white py-20 px-6 border-t border-slate-200">
+      <section className="w-full bg-white py-24 px-6 border-y border-slate-100">
         <div className="max-w-xl mx-auto text-center">
-          <h3 className="text-2xl font-black text-slate-900 mb-4">Want more updates?</h3>
-          <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mb-8">Join the private beta mailing list</p>
-          <div className="flex flex-col sm:flex-row gap-3">
+          <h3 className="text-2xl font-black text-slate-900 mb-4">Join our private beta</h3>
+          <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mb-10">We're building the future of home cooking together</p>
+          <div className="flex flex-col sm:flex-row gap-4">
              <input 
                type="email" 
-               placeholder="chef@kitchen.com" 
+               placeholder="your@email.com" 
                value={contactEmail}
                onChange={e => setContactEmail(e.target.value)}
-               className="flex-1 bg-slate-50 border border-slate-100 p-4 rounded-2xl outline-none focus:ring-2 focus:ring-orange-500 font-bold" 
+               className="flex-1 bg-slate-50 border border-slate-200 p-5 rounded-[1.5rem] outline-none focus:ring-2 focus:ring-orange-500 font-bold" 
              />
-             <button onClick={() => { alert("Thanks! We'll be in touch."); setContactEmail(''); }} className="bg-slate-900 text-white px-8 py-4 rounded-2xl font-black hover:bg-black transition-all">Notify Me</button>
+             <button onClick={() => { alert("Thanks! We'll reach out soon."); setContactEmail(''); }} className="bg-slate-900 text-white px-10 py-5 rounded-[1.5rem] font-black hover:bg-black transition-all shadow-xl">Notify Me</button>
           </div>
         </div>
       </section>
       
-      <footer className="py-10 text-slate-400 text-[10px] font-black uppercase tracking-[0.3em]">
-        © 2025 Cooking Buddy Ops
+      <footer className="py-12 text-slate-400 text-[10px] font-black uppercase tracking-[0.4em]">
+        © 2025 Cooking Buddy Ops • Standardized with Care
       </footer>
     </div>
   );
@@ -230,21 +255,18 @@ const App: React.FC = () => {
             ))}
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 shrink-0">
              <div className="hidden sm:flex flex-col items-end mr-1">
-                <span className="text-[10px] font-black text-white truncate max-w-[100px]">{user.displayName?.split(' ')[0]}</span>
+                <span className="text-[10px] font-black text-white truncate max-w-[100px]">{user.displayName || 'Chef'}</span>
                 <button onClick={logout} className="text-[8px] font-black uppercase text-orange-400 hover:text-orange-300">Logout</button>
              </div>
              {user.photoURL ? (
-               <img src={user.photoURL} alt="Profile" className="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-orange-500" />
+               <img src={user.photoURL} alt="Profile" className="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-orange-500 shadow-lg cursor-pointer" onClick={logout} title="Logout" />
              ) : (
-               <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-700 flex items-center justify-center font-black text-xs border-2 border-orange-500">
+               <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-700 flex items-center justify-center font-black text-xs border-2 border-orange-500 cursor-pointer" onClick={logout}>
                  {user.email?.[0].toUpperCase()}
                </div>
              )}
-             <button onClick={logout} className="sm:hidden text-slate-400 p-1">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-             </button>
           </div>
         </div>
       </nav>
@@ -255,9 +277,43 @@ const App: React.FC = () => {
             <div className="lg:col-span-8 flex flex-col gap-6">
               <RecipeInput onProcess={handleProcess} isLoading={loading} />
               
-              <div className="space-y-4 md:space-y-8">
-                {recipes.length > 0 ? (
-                  recipes.map(r => (
+              {/* SEARCH & FILTER BAR */}
+              <div className="bg-white p-4 md:p-6 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col md:flex-row gap-4 items-center">
+                 <div className="flex-1 w-full relative">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                    </div>
+                    <input 
+                      type="text" 
+                      placeholder="Search recipes, ingredients, or cuisine..."
+                      value={searchQuery}
+                      onChange={e => setSearchQuery(e.target.value)}
+                      className="w-full bg-slate-50 border-none pl-11 pr-4 py-3 rounded-2xl text-sm font-bold outline-none ring-1 ring-slate-200 focus:ring-orange-500 transition-all"
+                    />
+                 </div>
+                 <div className="flex gap-2 w-full md:w-auto">
+                    <select 
+                      value={filterCategory} 
+                      onChange={e => setFilterCategory(e.target.value)}
+                      className="flex-1 md:w-40 bg-slate-50 text-[10px] font-black uppercase p-3 rounded-2xl ring-1 ring-slate-200 outline-none"
+                    >
+                       <option value="">All Categories</option>
+                       {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                    <select 
+                      value={filterCuisine} 
+                      onChange={e => setFilterCuisine(e.target.value)}
+                      className="flex-1 md:w-40 bg-slate-50 text-[10px] font-black uppercase p-3 rounded-2xl ring-1 ring-slate-200 outline-none"
+                    >
+                       <option value="">All Cuisines</option>
+                       {uniqueCuisines.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                 </div>
+              </div>
+
+              <div className="space-y-4 md:space-y-6">
+                {filteredRecipes.length > 0 ? (
+                  filteredRecipes.map(r => (
                     <RecipeCard 
                       key={r.id} 
                       recipe={r} 
@@ -270,7 +326,7 @@ const App: React.FC = () => {
                   ))
                 ) : (
                   <div className="text-center py-20 bg-white rounded-[2.5rem] border border-dashed border-slate-200">
-                    <p className="text-slate-400 text-sm font-bold uppercase tracking-widest">No recipes yet. Paste a link above!</p>
+                    <p className="text-slate-400 text-sm font-bold uppercase tracking-widest">No recipes found matching your search</p>
                   </div>
                 )}
               </div>
@@ -280,7 +336,7 @@ const App: React.FC = () => {
                    onClick={() => setShowPantryMobile(!showPantryMobile)}
                    className="w-full bg-slate-900 text-white p-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex items-center justify-between shadow-xl"
                  >
-                    <span>Ingredients & Categories</span>
+                    <span>Ingredients & Library Setup</span>
                     <svg className={`transition-transform ${showPantryMobile ? 'rotate-180' : ''}`} xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
                  </button>
                  

@@ -23,6 +23,7 @@ export interface Recipe {
   id: string;
   dishName: string;
   category: RecipeCategory;
+  cuisine: string;
   variations: string[];
   servings: number;
   servingSizeInfo: string;
