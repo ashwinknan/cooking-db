@@ -87,7 +87,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
           </div>
           <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
             <button onClick={() => onRemove(recipe.id)} className="p-2 text-slate-300 hover:text-red-500 transition-all">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18m-2 0v14c0 1-2 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
             </button>
             <div className="md:hidden p-1.5 bg-orange-100 text-orange-600 rounded-lg shadow-sm">
                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14m-7-7 7 7-7 7"/></svg>
@@ -121,14 +121,14 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
                     </div>
                     {isEditing ? (
                       <div className="space-y-4">
-                         <input value={draft.dishName} onChange={e => setDraft({...draft, dishName: e.target.value})} className="w-full bg-white p-3 rounded-xl border border-slate-200 font-bold" />
+                         <input value={draft.dishName} onChange={e => setDraft({...draft, dishName: e.target.value})} className="w-full bg-white p-3 rounded-xl border border-slate-200 font-bold outline-none ring-1 ring-slate-100 focus:ring-orange-500" />
                          <textarea 
                            placeholder="Notes" 
                            value={draft.servingSizeInfo} 
                            onChange={e => setDraft({...draft, servingSizeInfo: e.target.value})}
-                           className="w-full bg-white p-3 rounded-xl border border-slate-200 text-xs" 
+                           className="w-full bg-white p-3 rounded-xl border border-slate-200 text-xs outline-none ring-1 ring-slate-100 focus:ring-orange-500 h-24" 
                          />
-                         <button onClick={handleSave} className="w-full bg-slate-900 text-white py-3 rounded-xl font-black uppercase tracking-widest">Save</button>
+                         <button onClick={handleSave} className="w-full bg-slate-900 text-white py-3 rounded-xl font-black uppercase tracking-widest hover:bg-black transition-all">Save Changes</button>
                       </div>
                     ) : (
                       <div className="space-y-3">
@@ -164,7 +164,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
 
           <div className="flex-1 overflow-y-auto px-6 py-8 relative flex flex-col items-center justify-center">
             {currentStepIndex === 0 ? (
-              <div className="w-full max-w-sm h-[450px] animate-in slide-in-from-right-2">
+              <div className="w-full max-w-sm h-[480px] animate-in slide-in-from-right-2">
                  <div className="bg-slate-800/80 p-8 rounded-[2.5rem] border border-slate-700 shadow-2xl h-full flex flex-col">
                     <div className="grid grid-cols-2 gap-6 mb-8 border-b border-slate-700/50 pb-8 shrink-0">
                        <div className="flex flex-col"><span className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Cuisine</span><span className="text-sm font-black text-white">{recipe.cuisine || '-'}</span></div>
@@ -185,7 +185,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
             ) : (
               <div className="w-full max-w-sm h-full flex flex-col justify-center animate-in slide-in-from-right-2">
                  {/* FIXED SIZE CARD */}
-                 <div className="bg-white rounded-[2.5rem] p-8 shadow-2xl border-4 border-white h-[450px] flex flex-col justify-between overflow-hidden">
+                 <div className="bg-white rounded-[2.5rem] p-8 shadow-2xl border-4 border-white h-[480px] flex flex-col justify-between overflow-hidden">
                     <div className="flex flex-col h-full">
                       <div className="flex items-center justify-between mb-8 shrink-0">
                          <div className="w-14 h-14 bg-slate-900 text-white rounded-[1.2rem] flex items-center justify-center text-2xl font-black shadow-lg rotate-2">{currentStepIndex}</div>
@@ -195,9 +195,8 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
                          </div>
                       </div>
                       
-                      {/* INSTRUCTION AREA WITH CONTROLLED FONT AND SCROLL */}
                       <div className="flex-1 overflow-y-auto no-scrollbar pr-1 mb-8">
-                        <p className="text-sm sm:text-base md:text-lg font-bold text-slate-800 leading-relaxed">
+                        <p className="text-base sm:text-lg font-bold text-slate-800 leading-relaxed text-center flex items-center justify-center h-full">
                           {recipe.steps[currentStepIndex-1].instruction}
                         </p>
                       </div>

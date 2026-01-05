@@ -23,6 +23,75 @@ import {
   setDoc
 } from 'firebase/firestore';
 
+const MOCK_RECIPES: Recipe[] = [
+  {
+    id: 'mock-1',
+    dishName: 'Spaghetti Aglio e Olio',
+    category: 'Lunch/Dinner',
+    cuisine: 'Italian',
+    variations: ['Add chili flakes', 'Add shrimp'],
+    servings: 2,
+    servingSizeInfo: 'Generous portion for two people.',
+    totalTimeMinutes: 15,
+    timestamp: Date.now(),
+    ingredients: [
+      { name: 'Spaghetti', kitchen: { value: 200, unit: 'g' }, shopping: { value: 500, unit: 'g packet' } },
+      { name: 'Garlic', kitchen: { value: 4, unit: 'cloves' }, shopping: { value: 1, unit: 'head' } },
+      { name: 'Olive Oil', kitchen: { value: 0.25, unit: 'cup' }, shopping: { value: 1, unit: 'bottle' } },
+      { name: 'Parsley', kitchen: { value: 0.5, unit: 'bunch' }, shopping: { value: 1, unit: 'bunch' } }
+    ],
+    steps: [
+      { instruction: 'Boil a large pot of salted water and cook spaghetti until al dente.', durationMinutes: 10, type: 'cooking' },
+      { instruction: 'Thinly slice the garlic and chop the parsley.', durationMinutes: 5, type: 'prep' },
+      { instruction: 'In a large pan, heat olive oil over medium-low heat. Add garlic and cook until golden.', durationMinutes: 5, type: 'cooking' },
+      { instruction: 'Toss pasta with garlic oil and parsley. Serve immediately.', durationMinutes: 2, type: 'prep' }
+    ]
+  },
+  {
+    id: 'mock-2',
+    dishName: 'Classic Avocado Toast',
+    category: 'Breakfast',
+    cuisine: 'Modern',
+    variations: ['Add poached egg', 'Drizzle sriracha'],
+    servings: 2,
+    servingSizeInfo: 'Two slices per person.',
+    totalTimeMinutes: 10,
+    timestamp: Date.now() - 1000,
+    ingredients: [
+      { name: 'Sourdough Bread', kitchen: { value: 4, unit: 'slices' }, shopping: { value: 1, unit: 'loaf' } },
+      { name: 'Avocado', kitchen: { value: 2, unit: 'units' }, shopping: { value: 2, unit: 'units' } },
+      { name: 'Lemon', kitchen: { value: 0.5, unit: 'unit' }, shopping: { value: 1, unit: 'unit' } }
+    ],
+    steps: [
+      { instruction: 'Toast the bread slices until golden brown.', durationMinutes: 3, type: 'cooking' },
+      { instruction: 'Mash the avocado with lemon juice and salt in a bowl.', durationMinutes: 4, type: 'prep' },
+      { instruction: 'Spread avocado on toast and garnish with chili flakes.', durationMinutes: 2, type: 'prep' }
+    ]
+  },
+  {
+    id: 'mock-3',
+    dishName: 'Greek Salad',
+    category: 'Lunch/Dinner',
+    cuisine: 'Mediterranean',
+    variations: ['Add grilled chicken'],
+    servings: 2,
+    servingSizeInfo: 'Light fresh meal.',
+    totalTimeMinutes: 12,
+    timestamp: Date.now() - 2000,
+    ingredients: [
+      { name: 'Cucumber', kitchen: { value: 1, unit: 'unit' }, shopping: { value: 1, unit: 'unit' } },
+      { name: 'Tomato', kitchen: { value: 2, unit: 'units' }, shopping: { value: 1, unit: 'pack' } },
+      { name: 'Feta Cheese', kitchen: { value: 100, unit: 'g' }, shopping: { value: 1, unit: 'block' } },
+      { name: 'Olives', kitchen: { value: 10, unit: 'units' }, shopping: { value: 1, unit: 'jar' } }
+    ],
+    steps: [
+      { instruction: 'Chop cucumber and tomatoes into bite-sized chunks.', durationMinutes: 5, type: 'prep' },
+      { instruction: 'Combine vegetables in a bowl with olives.', durationMinutes: 2, type: 'prep' },
+      { instruction: 'Top with cubed feta and a drizzle of olive oil/oregano.', durationMinutes: 2, type: 'prep' }
+    ]
+  }
+];
+
 const App: React.FC = () => {
   const [user, setUser] = useState<any | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -46,6 +115,11 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    if (user && user.uid === 'preview-user') {
+      setRecipes(MOCK_RECIPES);
+      return;
+    }
+
     if (!db || !user) return;
     const recipesQ = query(collection(db, "recipes"), orderBy("timestamp", "desc"));
     const unsubRecipes = onSnapshot(recipesQ, (snap) => {
@@ -96,7 +170,7 @@ const App: React.FC = () => {
     try {
       const existing = masterIngredientsList.map(i => i.name);
       const res = await parseRecipeContent(content, existing);
-      if (db) {
+      if (db && user?.uid !== 'preview-user') {
         await addDoc(collection(db!, "recipes"), {
           ...res,
           servings: 2,
@@ -113,13 +187,13 @@ const App: React.FC = () => {
   };
 
   const updateRecipe = async (r: Recipe) => { 
-    if (db) await updateDoc(doc(db!, "recipes", r.id), { ...r }); 
+    if (db && user?.uid !== 'preview-user') await updateDoc(doc(db!, "recipes", r.id), { ...r }); 
     else setRecipes(recipes.map(recipe => recipe.id === r.id ? r : recipe));
   };
   
   const deleteRecipe = async (id: string) => {
     if (confirm("Remove this recipe?")) {
-      if (db) {
+      if (db && user?.uid !== 'preview-user') {
         const batch = writeBatch(db!);
         recipes.forEach(r => { if (r.pairedWith?.includes(id)) batch.update(doc(db!, "recipes", r.id), { pairedWith: arrayRemove(id) }); });
         batch.delete(doc(db!, "recipes", id));
@@ -131,7 +205,7 @@ const App: React.FC = () => {
   };
 
   const handleTogglePairing = async (recipeAId: string, recipeBId: string) => {
-    if (!db) return;
+    if (!db || user?.uid === 'preview-user') return;
     const batch = writeBatch(db);
     const recipeA = recipes.find(r => r.id === recipeAId);
     const isAdding = !recipeA?.pairedWith?.includes(recipeBId);
@@ -146,7 +220,7 @@ const App: React.FC = () => {
   };
 
   const handleMergeIngredients = async (oldNames: string[], newName: string) => {
-    if (!db) return;
+    if (!db || user?.uid === 'preview-user') return;
     const batch = writeBatch(db);
     recipes.forEach(recipe => {
       let changed = false;
@@ -258,7 +332,7 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
-      <nav className="sticky top-0 z-[200] bg-slate-900 text-white shadow-xl h-16 md:h-20 shrink-0">
+      <nav className="sticky top-0 z-[200] bg-slate-900 text-white shadow-2xl h-16 md:h-20 shrink-0 border-b border-white/5">
         <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 md:w-10 md:h-10 bg-orange-500 rounded-xl flex items-center justify-center shadow-lg">
@@ -267,13 +341,26 @@ const App: React.FC = () => {
             <h1 className="text-2xl font-black tracking-tighter hidden xs:block">Buddy</h1>
           </div>
           <div className="flex gap-2 md:gap-4 overflow-x-auto no-scrollbar py-2 px-2">
-            {['library', 'cook', 'plan', 'pantry'].map((t) => (
-              <button key={t} onClick={() => setActiveTab(t as any)} className={`px-4 py-2 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === t ? 'bg-orange-50 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}>
-                {t === 'library' ? 'Library' : t === 'cook' ? 'Production' : t === 'plan' ? 'Architect' : 'Inventory'}
+            {[
+              { id: 'library', label: 'Library' },
+              { id: 'cook', label: 'Production' },
+              { id: 'plan', label: 'Architect' },
+              { id: 'pantry', label: 'Inventory' }
+            ].map((t) => (
+              <button 
+                key={t.id} 
+                onClick={() => setActiveTab(t.id as any)} 
+                className={`px-4 py-2.5 rounded-xl text-[10px] md:text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap border-2 ${
+                  activeTab === t.id 
+                    ? 'bg-orange-500 text-white border-orange-400 shadow-[0_0_20px_rgba(249,115,22,0.4)]' 
+                    : 'text-slate-400 border-transparent hover:text-white hover:bg-white/5'
+                }`}
+              >
+                {t.label}
               </button>
             ))}
           </div>
-          <button onClick={logout} className="text-[10px] font-black uppercase text-orange-400 hover:text-orange-300">Logout</button>
+          <button onClick={logout} className="text-[10px] font-black uppercase text-orange-400 hover:text-orange-300 ml-2">Logout</button>
         </div>
       </nav>
 

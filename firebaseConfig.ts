@@ -43,7 +43,7 @@ if (isConfigured) {
 export const loginWithGoogle = async () => {
   if (!isConfigured) {
     // Return a mock user for previewing in development environments
-    return { user: { uid: 'preview-user', displayName: 'Buddy Preview' } };
+    return { user: { uid: 'preview-user', displayName: 'Buddy Guest' } };
   }
   try {
     return await signInWithPopup(auth, googleProvider);
