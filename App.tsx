@@ -26,68 +26,65 @@ import {
 const MOCK_RECIPES: Recipe[] = [
   {
     id: 'mock-1',
-    dishName: 'Spaghetti Aglio e Olio',
+    dishName: 'Aglio e Olio Pasta',
     category: 'Lunch/Dinner',
     cuisine: 'Italian',
-    variations: ['Add chili flakes', 'Add shrimp'],
+    variations: ['Add Chili Flakes', 'Shrimp Topping'],
     servings: 2,
-    servingSizeInfo: 'Generous portion for two people.',
+    servingSizeInfo: '100g pasta per person.',
     totalTimeMinutes: 15,
     timestamp: Date.now(),
     ingredients: [
       { name: 'Spaghetti', kitchen: { value: 200, unit: 'g' }, shopping: { value: 500, unit: 'g packet' } },
-      { name: 'Garlic', kitchen: { value: 4, unit: 'cloves' }, shopping: { value: 1, unit: 'head' } },
+      { name: 'Garlic', kitchen: { value: 6, unit: 'cloves' }, shopping: { value: 1, unit: 'head' } },
       { name: 'Olive Oil', kitchen: { value: 0.25, unit: 'cup' }, shopping: { value: 1, unit: 'bottle' } },
-      { name: 'Parsley', kitchen: { value: 0.5, unit: 'bunch' }, shopping: { value: 1, unit: 'bunch' } }
+      { name: 'Parsley', kitchen: { value: 1, unit: 'bunch' }, shopping: { value: 1, unit: 'bunch' } }
     ],
     steps: [
-      { instruction: 'Boil a large pot of salted water and cook spaghetti until al dente.', durationMinutes: 10, type: 'cooking' },
-      { instruction: 'Thinly slice the garlic and chop the parsley.', durationMinutes: 5, type: 'prep' },
-      { instruction: 'In a large pan, heat olive oil over medium-low heat. Add garlic and cook until golden.', durationMinutes: 5, type: 'cooking' },
-      { instruction: 'Toss pasta with garlic oil and parsley. Serve immediately.', durationMinutes: 2, type: 'prep' }
+      { instruction: 'Boil water with salt.', durationMinutes: 8, type: 'cooking' },
+      { instruction: 'Slice garlic paper thin.', durationMinutes: 4, type: 'prep' },
+      { instruction: 'Sauté garlic in oil until golden.', durationMinutes: 3, type: 'cooking' }
     ]
   },
   {
     id: 'mock-2',
-    dishName: 'Classic Avocado Toast',
+    dishName: 'Spicy Avocado Toast',
     category: 'Breakfast',
-    cuisine: 'Modern',
-    variations: ['Add poached egg', 'Drizzle sriracha'],
-    servings: 2,
-    servingSizeInfo: 'Two slices per person.',
-    totalTimeMinutes: 10,
+    cuisine: 'Fusion',
+    variations: ['Fried Egg', 'Feta Crumbles'],
+    servings: 1,
+    servingSizeInfo: '1 massive slice.',
+    totalTimeMinutes: 8,
     timestamp: Date.now() - 1000,
     ingredients: [
-      { name: 'Sourdough Bread', kitchen: { value: 4, unit: 'slices' }, shopping: { value: 1, unit: 'loaf' } },
-      { name: 'Avocado', kitchen: { value: 2, unit: 'units' }, shopping: { value: 2, unit: 'units' } },
-      { name: 'Lemon', kitchen: { value: 0.5, unit: 'unit' }, shopping: { value: 1, unit: 'unit' } }
+      { name: 'Sourdough', kitchen: { value: 1, unit: 'slice' }, shopping: { value: 1, unit: 'loaf' } },
+      { name: 'Avocado', kitchen: { value: 1, unit: 'unit' }, shopping: { value: 3, unit: 'units' } },
+      { name: 'Chili Flakes', kitchen: { value: 1, unit: 'tsp' }, shopping: { value: 1, unit: 'jar' } }
     ],
     steps: [
-      { instruction: 'Toast the bread slices until golden brown.', durationMinutes: 3, type: 'cooking' },
-      { instruction: 'Mash the avocado with lemon juice and salt in a bowl.', durationMinutes: 4, type: 'prep' },
-      { instruction: 'Spread avocado on toast and garnish with chili flakes.', durationMinutes: 2, type: 'prep' }
+      { instruction: 'Toast sourdough until crisp.', durationMinutes: 3, type: 'cooking' },
+      { instruction: 'Mash avocado with lime and salt.', durationMinutes: 3, type: 'prep' },
+      { instruction: 'Spread and garnish.', durationMinutes: 2, type: 'prep' }
     ]
   },
   {
     id: 'mock-3',
-    dishName: 'Greek Salad',
+    dishName: 'Paneer Tikka',
     category: 'Lunch/Dinner',
-    cuisine: 'Mediterranean',
-    variations: ['Add grilled chicken'],
+    cuisine: 'Indian',
+    variations: ['Tandoori Oven', 'Air Fryer'],
     servings: 2,
-    servingSizeInfo: 'Light fresh meal.',
-    totalTimeMinutes: 12,
+    servingSizeInfo: '4-5 cubes per person.',
+    totalTimeMinutes: 30,
     timestamp: Date.now() - 2000,
     ingredients: [
-      { name: 'Cucumber', kitchen: { value: 1, unit: 'unit' }, shopping: { value: 1, unit: 'unit' } },
-      { name: 'Tomato', kitchen: { value: 2, unit: 'units' }, shopping: { value: 1, unit: 'pack' } },
-      { name: 'Feta Cheese', kitchen: { value: 100, unit: 'g' }, shopping: { value: 1, unit: 'block' } },
-      { name: 'Olives', kitchen: { value: 10, unit: 'units' }, shopping: { value: 1, unit: 'jar' } }
+      { name: 'Paneer', kitchen: { value: 200, unit: 'g' }, shopping: { value: 200, unit: 'g block' } },
+      { name: 'Yogurt', kitchen: { value: 0.5, unit: 'cup' }, shopping: { value: 1, unit: 'tub' } },
+      { name: 'Tikha Masala', kitchen: { value: 2, unit: 'tbsp' }, shopping: { value: 1, unit: 'box' } }
     ],
     steps: [
-      { instruction: 'Chop cucumber and tomatoes into bite-sized chunks.', durationMinutes: 5, type: 'prep' },
-      { instruction: 'Combine vegetables in a bowl with olives.', durationMinutes: 2, type: 'prep' },
-      { instruction: 'Top with cubed feta and a drizzle of olive oil/oregano.', durationMinutes: 2, type: 'prep' }
+      { instruction: 'Marinate paneer and veggies in spiced yogurt.', durationMinutes: 20, type: 'prep' },
+      { instruction: 'Grill on high heat until charred.', durationMinutes: 10, type: 'cooking' }
     ]
   }
 ];
@@ -170,17 +167,19 @@ const App: React.FC = () => {
     try {
       const existing = masterIngredientsList.map(i => i.name);
       const res = await parseRecipeContent(content, existing);
+      const newRecipeData = {
+        ...res,
+        id: Math.random().toString(36).substr(2, 9),
+        servings: 2,
+        timestamp: Date.now(),
+        ownerId: user?.uid,
+        pairedWith: []
+      } as Recipe;
+
       if (db && user?.uid !== 'preview-user') {
-        await addDoc(collection(db!, "recipes"), {
-          ...res,
-          servings: 2,
-          timestamp: Date.now(),
-          ownerId: user?.uid,
-          pairedWith: []
-        });
+        await addDoc(collection(db!, "recipes"), newRecipeData);
       } else {
-        const newRecipe = { ...res, id: Math.random().toString(), servings: 2, timestamp: Date.now(), pairedWith: [] } as Recipe;
-        setRecipes([newRecipe, ...recipes]);
+        setRecipes(prev => [newRecipeData, ...prev]);
       }
     } catch (e: any) { console.error(e); }
     finally { setLoading(false); }
@@ -332,15 +331,15 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
-      <nav className="sticky top-0 z-[200] bg-slate-900 text-white shadow-2xl h-16 md:h-20 shrink-0 border-b border-white/5">
+      <nav className="sticky top-0 z-[200] bg-slate-900 text-white shadow-2xl h-16 md:h-20 shrink-0 border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 md:w-10 md:h-10 bg-orange-500 rounded-xl flex items-center justify-center shadow-lg">
+            <div className="w-8 h-8 md:w-10 md:h-10 bg-orange-600 rounded-xl flex items-center justify-center shadow-lg">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>
             </div>
             <h1 className="text-2xl font-black tracking-tighter hidden xs:block">Buddy</h1>
           </div>
-          <div className="flex gap-2 md:gap-4 overflow-x-auto no-scrollbar py-2 px-2">
+          <div className="flex gap-2 md:gap-4 overflow-x-auto no-scrollbar py-2 px-2 h-full items-center">
             {[
               { id: 'library', label: 'Library' },
               { id: 'cook', label: 'Production' },
@@ -350,10 +349,10 @@ const App: React.FC = () => {
               <button 
                 key={t.id} 
                 onClick={() => setActiveTab(t.id as any)} 
-                className={`px-4 py-2.5 rounded-xl text-[10px] md:text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap border-2 ${
+                className={`px-4 py-2 rounded-xl text-[10px] md:text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
                   activeTab === t.id 
-                    ? 'bg-orange-500 text-white border-orange-400 shadow-[0_0_20px_rgba(249,115,22,0.4)]' 
-                    : 'text-slate-400 border-transparent hover:text-white hover:bg-white/5'
+                    ? 'bg-orange-600 text-white shadow-[0_0_20px_rgba(234,88,12,0.5)] ring-2 ring-orange-400' 
+                    : 'text-slate-400 hover:text-white hover:bg-white/10'
                 }`}
               >
                 {t.label}
@@ -374,7 +373,7 @@ const App: React.FC = () => {
                     <input 
                       type="text" placeholder="Search my library..." value={searchQuery}
                       onChange={e => setSearchQuery(e.target.value)}
-                      className="w-full bg-slate-50 border-none pl-6 pr-4 py-3 rounded-2xl text-sm font-bold outline-none ring-1 ring-slate-200 focus:ring-orange-500 transition-all"
+                      className="w-full bg-slate-50 border-none pl-6 pr-4 py-3 rounded-2xl text-sm font-bold outline-none ring-1 ring-slate-200 focus:ring-orange-600 transition-all"
                     />
                  </div>
                  <div className="flex gap-2 w-full md:w-auto">
