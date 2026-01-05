@@ -24,7 +24,7 @@ import {
 } from 'firebase/firestore';
 
 const App: React.FC = () => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<any | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'library' | 'cook' | 'plan' | 'pantry'>('library');
   const [recipes, setRecipes] = useState<Recipe[]>([]);
@@ -35,8 +35,14 @@ const App: React.FC = () => {
   const [filterCuisine, setFilterCuisine] = useState('');
 
   useEffect(() => {
-    if (!auth) { setAuthLoading(false); return; }
-    return onAuthStateChanged(auth, (u) => { setUser(u); setAuthLoading(false); });
+    if (!auth) { 
+      setAuthLoading(false); 
+      return; 
+    }
+    return onAuthStateChanged(auth, (u) => { 
+      setUser(u); 
+      setAuthLoading(false); 
+    });
   }, []);
 
   useEffect(() => {
@@ -90,26 +96,40 @@ const App: React.FC = () => {
     try {
       const existing = masterIngredientsList.map(i => i.name);
       const res = await parseRecipeContent(content, existing);
-      await addDoc(collection(db!, "recipes"), {
-        ...res,
-        servings: 2,
-        timestamp: Date.now(),
-        ownerId: user?.uid,
-        pairedWith: []
-      });
+      if (db) {
+        await addDoc(collection(db!, "recipes"), {
+          ...res,
+          servings: 2,
+          timestamp: Date.now(),
+          ownerId: user?.uid,
+          pairedWith: []
+        });
+      } else {
+        const newRecipe = { ...res, id: Math.random().toString(), servings: 2, timestamp: Date.now(), pairedWith: [] } as Recipe;
+        setRecipes([newRecipe, ...recipes]);
+      }
     } catch (e: any) { console.error(e); }
     finally { setLoading(false); }
   };
 
-  const updateRecipe = async (r: Recipe) => { await updateDoc(doc(db!, "recipes", r.id), { ...r }); };
+  const updateRecipe = async (r: Recipe) => { 
+    if (db) await updateDoc(doc(db!, "recipes", r.id), { ...r }); 
+    else setRecipes(recipes.map(recipe => recipe.id === r.id ? r : recipe));
+  };
+  
   const deleteRecipe = async (id: string) => {
     if (confirm("Remove this recipe?")) {
-      const batch = writeBatch(db!);
-      recipes.forEach(r => { if (r.pairedWith?.includes(id)) batch.update(doc(db!, "recipes", r.id), { pairedWith: arrayRemove(id) }); });
-      batch.delete(doc(db!, "recipes", id));
-      await batch.commit();
+      if (db) {
+        const batch = writeBatch(db!);
+        recipes.forEach(r => { if (r.pairedWith?.includes(id)) batch.update(doc(db!, "recipes", r.id), { pairedWith: arrayRemove(id) }); });
+        batch.delete(doc(db!, "recipes", id));
+        await batch.commit();
+      } else {
+        setRecipes(recipes.filter(r => r.id !== id));
+      }
     }
   };
+
   const handleTogglePairing = async (recipeAId: string, recipeBId: string) => {
     if (!db) return;
     const batch = writeBatch(db);
@@ -143,7 +163,15 @@ const App: React.FC = () => {
     await handleMergeIngredients([oldName], newName);
   };
 
-  if (authLoading) return <div className="h-screen flex items-center justify-center bg-white text-slate-900 font-black animate-pulse">BUDDY INITIALIZING...</div>;
+  const handleAuthAction = async () => {
+    if (!isConfigured) {
+      setUser({ uid: 'preview-user', displayName: 'Buddy Preview' });
+    } else {
+      await loginWithGoogle();
+    }
+  };
+
+  if (authLoading) return <div className="h-screen flex items-center justify-center bg-white text-slate-900 font-black animate-pulse">BUDDY...</div>;
 
   if (!user) return (
     <div className="min-h-screen bg-white flex flex-col items-center">
@@ -158,7 +186,9 @@ const App: React.FC = () => {
            <a href="#problems" className="hover:text-orange-600 transition-colors">The Problems</a>
            <a href="#story" className="hover:text-orange-600 transition-colors">My Story</a>
         </div>
-        <button onClick={loginWithGoogle} className="bg-slate-900 text-white px-8 py-3 rounded-full font-black text-[11px] uppercase tracking-widest hover:bg-orange-600 transition-all shadow-xl">Get Started</button>
+        <button onClick={handleAuthAction} className="bg-slate-900 text-white px-8 py-3 rounded-full font-black text-[11px] uppercase tracking-widest hover:bg-orange-600 transition-all shadow-xl">
+          {isConfigured ? 'Get Started' : 'Preview Access'}
+        </button>
       </nav>
 
       <header className="w-full max-w-6xl mx-auto py-24 md:py-32 px-6 text-center">
@@ -166,36 +196,36 @@ const App: React.FC = () => {
           Making home <br/><span className="text-orange-600 italic">cooking easier.</span>
         </h1>
         <p className="text-xl md:text-2xl text-slate-500 font-medium mb-14 max-w-3xl mx-auto leading-relaxed">
-          Buddy is my attempt at a system that works for you, so you finally realize that cooking at home isn't actually that difficult after all.
+          Buddy is a tool I built because I realized home cooking isn't actually that hard—we just needed a better way to handle the boring parts like planning and shopping.
         </p>
-        <button onClick={loginWithGoogle} className="bg-slate-900 text-white px-12 py-6 rounded-[2rem] font-black text-xl shadow-2xl hover:scale-105 transition-all">Start using Buddy</button>
+        <button onClick={handleAuthAction} className="bg-slate-900 text-white px-12 py-6 rounded-[2rem] font-black text-xl shadow-2xl hover:scale-105 transition-all">Start using Buddy</button>
       </header>
 
       <section id="problems" className="w-full bg-slate-50 py-32 px-6">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-4xl md:text-6xl font-black text-center mb-20 tracking-tighter">The three things I set out to fix.</h2>
+          <h2 className="text-4xl md:text-6xl font-black text-center mb-20 tracking-tighter">The things I set out to fix.</h2>
           <div className="grid md:grid-cols-3 gap-8">
             <div className="bg-white p-10 rounded-[3rem] shadow-sm border border-slate-100">
               <div className="text-4xl mb-6">🔗</div>
               <h3 className="text-2xl font-black mb-4">Reading recipes</h3>
-              <p className="text-slate-500 font-medium leading-relaxed">Recipe websites are filled with ads and too much fluff. Buddy extracts just the facts—clean, standardized data you can actually use.</p>
+              <p className="text-slate-500 font-medium leading-relaxed text-sm">Recipe websites are noisy. Buddy reads the link and gives you just the facts—standardized and easy to follow.</p>
             </div>
             <div className="bg-white p-10 rounded-[3rem] shadow-sm border border-slate-100">
               <div className="text-4xl mb-6">🗓️</div>
               <h3 className="text-2xl font-black mb-4">Planning the week</h3>
-              <p className="text-slate-500 font-medium leading-relaxed">"What to cook?" is the biggest headache. Deciding once for the whole week makes everything easier.</p>
+              <p className="text-slate-500 font-medium leading-relaxed text-sm">"What should we cook tonight?" is a constant headache. Deciding once for the whole week makes everything easier.</p>
             </div>
             <div className="bg-white p-10 rounded-[3rem] shadow-sm border border-slate-100">
               <div className="text-4xl mb-6">🛒</div>
               <h3 className="text-2xl font-black mb-4">Knowing what to buy</h3>
-              <p className="text-slate-500 font-medium leading-relaxed">A shopping list based on exactly what you need for your plan. No waste, no missing ingredients.</p>
+              <p className="text-slate-500 font-medium leading-relaxed text-sm">Buddy creates a shopping list based on your plan. No more guessing or wasting ingredients.</p>
             </div>
           </div>
           
           <div className="mt-12 bg-slate-900 text-white p-12 rounded-[4rem] shadow-2xl">
-             <h3 className="text-3xl font-black mb-6">Cooking efficiently</h3>
-             <p className="text-slate-400 text-xl font-medium leading-relaxed max-w-3xl">
-               Novice cooks struggle to do multiple things at once. My goal is to help you guide your kitchen—or train your cook—to do multiple tasks in parallel, making the whole process efficient.
+             <h3 className="text-3xl font-black mb-6 italic text-orange-500">A more efficient kitchen.</h3>
+             <p className="text-slate-400 text-lg font-medium leading-relaxed max-w-3xl">
+               Most people struggle to do multiple things at once in the kitchen. Buddy helps you see all your steps clearly, making the whole process feel much more manageable.
              </p>
           </div>
         </div>
@@ -205,13 +235,13 @@ const App: React.FC = () => {
         <h2 className="text-4xl font-black text-slate-900 mb-12 italic text-center">My Story</h2>
         <div className="space-y-8 text-xl text-slate-600 leading-relaxed font-medium">
           <p>
-            I love cooking. But I realize that cooking is as much an operational problem as it is a creative one. <strong>I have been pursuing this goal for 5 years</strong>, and I can attest no one has thought about this as much as I have.
+            I love cooking. But I realize that cooking can be quite a mess to manage. <strong>I have been pursuing this goal for 5 years</strong>, trying to figure out how to make it feel less like a chore.
           </p>
           <p>
-            My point is simple: we pay cooks but still order outside so much. Why? It makes no sense. We do it because we feel it is challenging.
+            It makes no sense that we often order food even when we want to cook at home. We do it because starting the process feels like too much work.
           </p>
           <p>
-            This isn't a "startup" for me—this is just an itch. I solved this for myself first, and I will continue to. Buddy is my attempt at a system that makes it easier to navigate food.
+            Buddy is my attempt at a system that makes it easier to navigate food. It’s the tool I wanted for myself.
           </p>
         </div>
         <div className="mt-16 flex flex-col items-center">
@@ -238,7 +268,7 @@ const App: React.FC = () => {
           </div>
           <div className="flex gap-2 md:gap-4 overflow-x-auto no-scrollbar py-2 px-2">
             {['library', 'cook', 'plan', 'pantry'].map((t) => (
-              <button key={t} onClick={() => setActiveTab(t as any)} className={`px-4 py-2 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === t ? 'bg-orange-500 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}>
+              <button key={t} onClick={() => setActiveTab(t as any)} className={`px-4 py-2 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === t ? 'bg-orange-50 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}>
                 {t === 'library' ? 'Library' : t === 'cook' ? 'Production' : t === 'plan' ? 'Architect' : 'Inventory'}
               </button>
             ))}
@@ -275,7 +305,7 @@ const App: React.FC = () => {
                 {filteredRecipes.length > 0 ? filteredRecipes.map(r => (
                   <RecipeCard key={r.id} recipe={r} onRemove={deleteRecipe} onUpdate={updateRecipe} allRecipes={recipes} categories={categories} onTogglePairing={handleTogglePairing} />
                 )) : (
-                  <div className="text-center py-20 bg-white rounded-[3rem] border border-dashed border-slate-200">
+                  <div className="text-center py-20 bg-white rounded-[3rem] border border-dashed border-slate-200 px-6">
                     <p className="text-slate-400 text-sm font-black uppercase italic">No recipes found matching your filters.</p>
                   </div>
                 )}
@@ -295,9 +325,9 @@ const App: React.FC = () => {
         {activeTab === 'cook' && <CookingOps allRecipes={recipes} />}
         {activeTab === 'plan' && <MealPlanning allRecipes={recipes} />}
         {activeTab === 'pantry' && (
-          <div className="max-w-xl mx-auto text-center py-24 bg-white rounded-[3rem] border-2 border-dashed border-slate-200">
-             <h2 className="text-2xl font-black mb-3 text-slate-900 italic">Inventory Management</h2>
-             <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.3em]">Connecting Pantry to Production</p>
+          <div className="max-w-xl mx-auto text-center py-24 bg-white rounded-[3rem] border-2 border-dashed border-slate-200 px-10">
+             <h2 className="text-2xl font-black mb-3 text-slate-900 italic">Inventory</h2>
+             <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.3em]">Tracking your essentials</p>
           </div>
         )}
       </main>

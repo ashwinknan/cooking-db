@@ -1,3 +1,4 @@
+
 import { initializeApp, getApps } from "firebase/app";
 import type { FirebaseApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
@@ -16,7 +17,8 @@ const firebaseConfig = {
 const isConfigured = !!(
   firebaseConfig.projectId && 
   firebaseConfig.apiKey &&
-  firebaseConfig.projectId !== "undefined"
+  firebaseConfig.projectId !== "undefined" &&
+  firebaseConfig.apiKey !== ""
 );
 
 let app: FirebaseApp | null = null;
@@ -31,15 +33,18 @@ if (isConfigured) {
     auth = getAuth(app);
     
     if (typeof window !== 'undefined') {
-      console.info("Cooking Ops: Production Services Connected.");
+      console.info("Buddy: Services Connected.");
     }
   } catch (error) {
-    console.error("Firebase Production Error:", error);
+    console.error("Firebase Error:", error);
   }
 }
 
 export const loginWithGoogle = async () => {
-  if (!auth) return;
+  if (!isConfigured) {
+    // Return a mock user for previewing in development environments
+    return { user: { uid: 'preview-user', displayName: 'Buddy Preview' } };
+  }
   try {
     return await signInWithPopup(auth, googleProvider);
   } catch (error) {
@@ -48,6 +53,12 @@ export const loginWithGoogle = async () => {
   }
 };
 
-export const logout = () => auth?.signOut();
+export const logout = () => {
+  if (!isConfigured) {
+    window.location.reload();
+    return;
+  }
+  return auth?.signOut();
+};
 
 export { db, auth, isConfigured };

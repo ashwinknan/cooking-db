@@ -82,7 +82,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
               </div>
             </div>
             <p className="text-[9px] md:text-xs text-slate-400 font-bold uppercase tracking-widest">
-              {recipe.steps.length} Tasks • {totalTime}m Operational Time
+              {recipe.steps.length} Steps • {totalTime}m
             </p>
           </div>
           <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
@@ -104,7 +104,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
             <div className="p-8 border-t border-slate-50 bg-slate-50/20">
               <div className="grid grid-cols-12 gap-10">
                  <div className="col-span-4">
-                    <h4 className="text-[10px] font-black uppercase text-slate-400 mb-4 tracking-widest">Inventory List</h4>
+                    <h4 className="text-[10px] font-black uppercase text-slate-400 mb-4 tracking-widest">Ingredients</h4>
                     <div className="space-y-2">
                        {recipe.ingredients.map((ing, i) => (
                          <div key={i} className="flex justify-between items-center bg-white p-3 rounded-xl border border-slate-100 text-xs font-bold">
@@ -116,19 +116,19 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
                  </div>
                  <div className="col-span-8">
                     <div className="flex items-center justify-between mb-4">
-                       <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Task Sequence</h4>
+                       <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Process</h4>
                        <button onClick={() => setIsEditing(!isEditing)} className="text-[10px] font-black uppercase text-orange-600">{isEditing ? 'Cancel' : 'Edit'}</button>
                     </div>
                     {isEditing ? (
                       <div className="space-y-4">
                          <input value={draft.dishName} onChange={e => setDraft({...draft, dishName: e.target.value})} className="w-full bg-white p-3 rounded-xl border border-slate-200 font-bold" />
                          <textarea 
-                           placeholder="Operational Notes / Serving Info" 
+                           placeholder="Notes" 
                            value={draft.servingSizeInfo} 
                            onChange={e => setDraft({...draft, servingSizeInfo: e.target.value})}
                            className="w-full bg-white p-3 rounded-xl border border-slate-200 text-xs" 
                          />
-                         <button onClick={handleSave} className="w-full bg-slate-900 text-white py-3 rounded-xl font-black uppercase tracking-widest">Save System Changes</button>
+                         <button onClick={handleSave} className="w-full bg-slate-900 text-white py-3 rounded-xl font-black uppercase tracking-widest">Save</button>
                       </div>
                     ) : (
                       <div className="space-y-3">
@@ -150,11 +150,11 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
       {/* MOBILE MODAL - TASK FOCUSED INTERFACE */}
       {isCookingMode && (
         <div className="fixed inset-0 z-[1000] bg-slate-900 flex flex-col animate-in fade-in slide-in-from-bottom-5 duration-300">
-          <header className="px-6 py-6 flex items-center justify-between bg-slate-800 border-b border-slate-700/50 shadow-xl">
+          <header className="px-6 py-6 flex items-center justify-between bg-slate-800 border-b border-slate-700/50 shadow-xl shrink-0">
             <div className="flex flex-col">
               <h2 className="text-white text-base font-black truncate max-w-[200px] tracking-tight">{recipe.dishName}</h2>
               <p className="text-orange-400 text-[9px] font-black uppercase tracking-[0.2em]">
-                {currentStepIndex === 0 ? 'Production Specs' : `Task ${currentStepIndex} of ${recipe.steps.length}`}
+                {currentStepIndex === 0 ? 'Summary' : `Step ${currentStepIndex} of ${recipe.steps.length}`}
               </p>
             </div>
             <button onClick={() => setIsCookingMode(false)} className="text-slate-500 hover:text-white p-2">
@@ -162,23 +162,17 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
             </button>
           </header>
 
-          <div className="flex-1 overflow-y-auto px-6 py-8 relative">
+          <div className="flex-1 overflow-y-auto px-6 py-8 relative flex flex-col items-center justify-center">
             {currentStepIndex === 0 ? (
-              <div className="space-y-6 animate-in slide-in-from-right-2">
-                 <div className="bg-slate-800/80 p-8 rounded-[2.5rem] border border-slate-700 shadow-2xl">
-                    <div className="grid grid-cols-2 gap-6 mb-8 border-b border-slate-700/50 pb-8">
-                       <div className="flex flex-col"><span className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Cuisine</span><span className="text-sm font-black text-white">{recipe.cuisine || 'Standard'}</span></div>
-                       <div className="flex flex-col"><span className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Duration</span><span className="text-sm font-black text-white">{totalTime} mins</span></div>
-                       <div className="flex flex-col"><span className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Category</span><span className="text-sm font-black text-white">{recipe.category}</span></div>
-                       <div className="flex flex-col"><span className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Yield</span><span className="text-sm font-black text-white">2 people</span></div>
+              <div className="w-full max-w-sm h-[450px] animate-in slide-in-from-right-2">
+                 <div className="bg-slate-800/80 p-8 rounded-[2.5rem] border border-slate-700 shadow-2xl h-full flex flex-col">
+                    <div className="grid grid-cols-2 gap-6 mb-8 border-b border-slate-700/50 pb-8 shrink-0">
+                       <div className="flex flex-col"><span className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Cuisine</span><span className="text-sm font-black text-white">{recipe.cuisine || '-'}</span></div>
+                       <div className="flex flex-col"><span className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Total</span><span className="text-sm font-black text-white">{totalTime}m</span></div>
                     </div>
-                    <div className="mb-6 text-[11px] font-bold text-slate-300 italic bg-slate-900/50 p-4 rounded-2xl border border-slate-700 leading-relaxed">{recipe.servingSizeInfo}</div>
                     
-                    <h4 className="text-orange-400 text-[10px] font-black uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
-                       <div className="w-1 h-1 bg-orange-400 rounded-full"></div>
-                       Inventory Check
-                    </h4>
-                    <div className="space-y-3">
+                    <h4 className="text-orange-400 text-[10px] font-black uppercase tracking-[0.3em] mb-4 flex items-center gap-2 shrink-0">Ingredients</h4>
+                    <div className="flex-1 overflow-y-auto no-scrollbar space-y-3">
                        {recipe.ingredients.map((ing, i) => (
                          <div key={i} className="flex justify-between items-center text-sm font-bold text-slate-100 border-b border-slate-700/20 pb-3 last:border-0">
                             <span className="text-slate-300">{ing.name}</span>
@@ -187,48 +181,47 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
                        ))}
                     </div>
                  </div>
-                 {recipe.pairedWith && recipe.pairedWith.length > 0 && (
-                   <div className="bg-slate-800/40 p-6 rounded-[2rem] border border-slate-700">
-                      <h4 className="text-blue-400 text-[9px] font-black uppercase tracking-widest mb-4">Operational Links</h4>
-                      <div className="flex flex-wrap gap-2">
-                         {recipe.pairedWith.map(pid => {
-                           const f = allRecipes.find(r => r.id === pid);
-                           return f ? <span key={pid} className="bg-slate-700 text-slate-300 px-3 py-2 rounded-xl text-[10px] font-black">{f.dishName}</span> : null;
-                         })}
-                      </div>
-                   </div>
-                 )}
               </div>
             ) : (
-              <div className="h-full flex flex-col justify-center animate-in slide-in-from-right-2">
-                 <div className={`bg-white rounded-[3rem] p-10 shadow-[0_35px_60px_-15px_rgba(0,0,0,0.3)] border-4 border-white transition-all duration-300`}>
-                    <div className="flex items-center justify-between mb-10">
-                       <div className="w-14 h-14 bg-slate-900 text-white rounded-[1.2rem] flex items-center justify-center text-2xl font-black shadow-lg rotate-2">{currentStepIndex}</div>
-                       <div className="flex flex-col items-end">
-                          <span className="text-[10px] font-black uppercase px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-xl text-slate-500">{recipe.steps[currentStepIndex-1].type}</span>
-                          <span className="text-[11px] font-black text-slate-400 mt-2 tracking-widest">{recipe.steps[currentStepIndex-1].durationMinutes}m Operation</span>
-                       </div>
+              <div className="w-full max-w-sm h-full flex flex-col justify-center animate-in slide-in-from-right-2">
+                 {/* FIXED SIZE CARD */}
+                 <div className="bg-white rounded-[2.5rem] p-8 shadow-2xl border-4 border-white h-[450px] flex flex-col justify-between overflow-hidden">
+                    <div className="flex flex-col h-full">
+                      <div className="flex items-center justify-between mb-8 shrink-0">
+                         <div className="w-14 h-14 bg-slate-900 text-white rounded-[1.2rem] flex items-center justify-center text-2xl font-black shadow-lg rotate-2">{currentStepIndex}</div>
+                         <div className="flex flex-col items-end">
+                            <span className="text-[10px] font-black uppercase px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-xl text-slate-500 tracking-tight">{recipe.steps[currentStepIndex-1].type}</span>
+                            <span className="text-[11px] font-black text-slate-400 mt-2">{recipe.steps[currentStepIndex-1].durationMinutes}m</span>
+                         </div>
+                      </div>
+                      
+                      {/* INSTRUCTION AREA WITH CONTROLLED FONT AND SCROLL */}
+                      <div className="flex-1 overflow-y-auto no-scrollbar pr-1 mb-8">
+                        <p className="text-sm sm:text-base md:text-lg font-bold text-slate-800 leading-relaxed">
+                          {recipe.steps[currentStepIndex-1].instruction}
+                        </p>
+                      </div>
+
+                      <button 
+                        onClick={() => toggleStepComplete(currentStepIndex-1)}
+                        className={`w-full py-5 rounded-[1.8rem] font-black text-xs uppercase tracking-[0.15em] transition-all shadow-xl active:scale-95 flex items-center justify-center gap-2 shrink-0 ${completedSteps.has(currentStepIndex-1) ? 'bg-green-600 text-white shadow-green-500/20' : 'bg-slate-900 text-white'}`}
+                      >
+                        {completedSteps.has(currentStepIndex-1) ? (
+                          <>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                            Task Cleared
+                          </>
+                        ) : 'Finish Task'}
+                      </button>
                     </div>
-                    <p className="text-xl font-bold text-slate-800 leading-snug mb-14 text-center min-h-[120px] flex items-center justify-center">{recipe.steps[currentStepIndex-1].instruction}</p>
-                    <button 
-                      onClick={() => toggleStepComplete(currentStepIndex-1)}
-                      className={`w-full py-5 rounded-[2rem] font-black text-sm uppercase tracking-[0.2em] transition-all shadow-xl active:scale-95 flex items-center justify-center gap-3 ${completedSteps.has(currentStepIndex-1) ? 'bg-green-600 text-white shadow-green-500/20' : 'bg-slate-900 text-white hover:bg-black shadow-slate-900/20'}`}
-                    >
-                      {completedSteps.has(currentStepIndex-1) ? (
-                        <>
-                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-                          Step Cleared
-                        </>
-                      ) : 'Mark Task as Finished'}
-                    </button>
                  </div>
               </div>
             )}
 
             {showIngredientsOverlay && (
               <div className="absolute inset-0 bg-slate-900/98 z-[100] p-10 flex flex-col animate-in fade-in slide-in-from-bottom-10" onClick={() => setShowIngredientsOverlay(false)}>
-                 <h3 className="text-white text-3xl font-black mb-10 tracking-tighter italic">Ingredient Reference</h3>
-                 <div className="space-y-5 overflow-y-auto">
+                 <h3 className="text-white text-3xl font-black mb-10 tracking-tighter italic underline decoration-orange-500 underline-offset-8">Ingredients</h3>
+                 <div className="space-y-5 overflow-y-auto pr-2 no-scrollbar">
                     {recipe.ingredients.map((ing, i) => (
                       <div key={i} className="flex justify-between items-center text-slate-100 text-2xl font-bold border-b border-white/5 pb-4">
                          <span className="text-slate-300">{ing.name}</span>
@@ -236,18 +229,18 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
                       </div>
                     ))}
                  </div>
-                 <p className="mt-auto text-center text-[10px] text-slate-600 font-black uppercase tracking-[0.4em] py-10 animate-pulse">Tap anywhere to return</p>
+                 <p className="mt-auto text-center text-[10px] text-slate-600 font-black uppercase tracking-[0.5em] py-8">Tap anywhere to close</p>
               </div>
             )}
           </div>
 
-          <footer className="p-8 flex gap-4 bg-slate-800 border-t border-slate-700/50 shadow-2xl">
-             <button onClick={() => setShowIngredientsOverlay(true)} className="w-16 h-16 bg-slate-700 text-slate-300 rounded-[1.5rem] flex items-center justify-center border border-slate-600 shadow-xl active:scale-90 transition-all" title="Reference Quantities">
+          <footer className="p-8 flex gap-4 bg-slate-800 border-t border-slate-700/50 shadow-2xl shrink-0">
+             <button onClick={() => setShowIngredientsOverlay(true)} className="w-16 h-16 bg-slate-700 text-slate-300 rounded-[1.5rem] flex items-center justify-center border border-slate-600 shadow-xl active:scale-90 transition-all">
                 <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg>
              </button>
              {currentStepIndex > 0 && <button onClick={() => setCurrentStepIndex(currentStepIndex-1)} className="flex-1 bg-slate-700 text-white font-black rounded-[1.5rem] text-[11px] uppercase tracking-widest border border-slate-600">Back</button>}
              <button onClick={() => currentStepIndex < recipe.steps.length ? setCurrentStepIndex(currentStepIndex+1) : setIsCookingMode(false)} className="flex-[2] bg-orange-600 text-white font-black rounded-[1.5rem] text-[11px] uppercase tracking-[0.2em] shadow-xl active:scale-95 shadow-orange-500/10 transition-all">
-                {currentStepIndex === 0 ? 'Start Cooking' : currentStepIndex === recipe.steps.length ? 'Finalize' : 'Next Task'}
+                {currentStepIndex === 0 ? 'Start' : currentStepIndex === recipe.steps.length ? 'Finalize' : 'Next'}
              </button>
           </footer>
         </div>
